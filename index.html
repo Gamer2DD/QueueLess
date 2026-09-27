@@ -1,0 +1,3699 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.5, user-scalable=yes">
+  <title>QueueLess · Skip the waiting. Keep your place.</title>
+  <!-- Font Awesome 6 (free) -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+  <!-- Google Fonts: Inter -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,400;14..32,500;14..32,600;14..32,700&display=swap" rel="stylesheet">
+  <style>
+    /* ========== GLOBAL RESET & VARIABLES ========== */
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    :root {
+      --brand-primary: #4f46e5;
+      --brand-primary-dark: #4338ca;
+      --brand-primary-light: #eef2ff;
+      --brand-secondary: #0f172a;
+      --neutral-50: #f8fafc;
+      --neutral-100: #f1f5f9;
+      --neutral-200: #e2e8f0;
+      --neutral-300: #cbd5e1;
+      --neutral-400: #94a3b8;
+      --neutral-500: #64748b;
+      --neutral-600: #475569;
+      --neutral-700: #334155;
+      --neutral-800: #1e293b;
+      --success: #10b981;
+      --success-light: #d1fae5;
+      --warning: #f59e0b;
+      --warning-light: #fef3c7;
+      --danger: #ef4444;
+      --danger-light: #fee2e2;
+      --info: #3b82f6;
+      --card-radius: 1.25rem;
+      --card-radius-sm: 0.875rem;
+      --shadow-sm: 0 4px 12px rgba(0, 0, 0, 0.04);
+      --shadow-md: 0 10px 25px -5px rgba(0, 0, 0, 0.08), 0 8px 10px -6px rgba(0, 0, 0, 0.02);
+      --shadow-lg: 0 20px 30px -10px rgba(0, 0, 0, 0.1);
+      --transition: all 0.2s ease;
+      --font: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    }
+
+    body {
+      font-family: var(--font);
+      background: var(--neutral-50);
+      color: var(--neutral-800);
+      line-height: 1.5;
+      -webkit-font-smoothing: antialiased;
+      overflow-x: hidden;
+      padding-bottom: 0;
+    }
+
+    /* Utility */
+    .container {
+      width: 100%;
+      max-width: 1280px;
+      margin: 0 auto;
+      padding: 0 1.5rem;
+    }
+
+    .sr-only {
+      position: absolute;
+      width: 1px;
+      height: 1px;
+      padding: 0;
+      margin: -1px;
+      overflow: hidden;
+      clip: rect(0, 0, 0, 0);
+      white-space: nowrap;
+      border-width: 0;
+    }
+
+    /* Buttons */
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.5rem;
+      font-weight: 600;
+      font-size: 0.95rem;
+      padding: 0.7rem 1.5rem;
+      border-radius: 2rem;
+      border: 1px solid transparent;
+      cursor: pointer;
+      transition: var(--transition);
+      background: white;
+      color: var(--neutral-800);
+      box-shadow: var(--shadow-sm);
+      text-decoration: none;
+      white-space: nowrap;
+    }
+
+    .btn i {
+      font-size: 1rem;
+    }
+
+    .btn-primary {
+      background: var(--brand-primary);
+      color: white;
+      box-shadow: 0 6px 14px rgba(79, 70, 229, 0.25);
+    }
+
+    .btn-primary:hover {
+      background: var(--brand-primary-dark);
+      transform: translateY(-1px);
+      box-shadow: 0 8px 20px rgba(79, 70, 229, 0.35);
+    }
+
+    .btn-outline {
+      background: transparent;
+      border: 1px solid var(--neutral-300);
+      box-shadow: none;
+    }
+
+    .btn-outline:hover {
+      background: var(--neutral-100);
+      border-color: var(--neutral-400);
+    }
+
+    .btn-success {
+      background: var(--success);
+      color: white;
+      box-shadow: 0 6px 14px rgba(16, 185, 129, 0.25);
+    }
+
+    .btn-success:hover {
+      background: #059669;
+    }
+
+    .btn-danger {
+      background: var(--danger);
+      color: white;
+      box-shadow: 0 6px 14px rgba(239, 68, 68, 0.25);
+    }
+
+    .btn-danger:hover {
+      background: #dc2626;
+    }
+
+    .btn-sm {
+      padding: 0.45rem 1rem;
+      font-size: 0.85rem;
+    }
+
+    .btn-block {
+      width: 100%;
+    }
+
+    .btn:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+      transform: none !important;
+    }
+
+    /* Card */
+    .card {
+      background: white;
+      border-radius: var(--card-radius);
+      box-shadow: var(--shadow-sm);
+      padding: 1.5rem;
+      transition: var(--transition);
+    }
+
+    .card-hover:hover {
+      box-shadow: var(--shadow-md);
+      transform: translateY(-2px);
+    }
+
+    /* Badge */
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      padding: 0.25rem 0.75rem;
+      border-radius: 2rem;
+      font-size: 0.75rem;
+      font-weight: 600;
+      line-height: 1.2;
+    }
+
+    .badge-primary {
+      background: var(--brand-primary-light);
+      color: var(--brand-primary-dark);
+    }
+
+    .badge-success {
+      background: var(--success-light);
+      color: #065f46;
+    }
+
+    .badge-warning {
+      background: var(--warning-light);
+      color: #92400e;
+    }
+
+    .badge-danger {
+      background: var(--danger-light);
+      color: #991b1b;
+    }
+
+    /* Demo mode banner */
+    .demo-banner {
+      background: linear-gradient(90deg, #fbbf24 0%, #f59e0b 100%);
+      color: #1e1b0e;
+      font-weight: 700;
+      font-size: 0.85rem;
+      padding: 0.5rem 1rem;
+      text-align: center;
+      letter-spacing: 0.3px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.5rem;
+      box-shadow: var(--shadow-sm);
+      position: relative;
+      z-index: 100;
+    }
+
+    .demo-banner i {
+      font-size: 1rem;
+    }
+
+    /* ========== NAVBAR ========== */
+    .navbar {
+      background: white;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.03);
+      padding: 0.85rem 1.5rem;
+      position: sticky;
+      top: 0;
+      z-index: 90;
+      backdrop-filter: blur(8px);
+      background: rgba(255, 255, 255, 0.85);
+      border-bottom: 1px solid var(--neutral-200);
+    }
+
+    .nav-container {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      max-width: 1280px;
+      margin: 0 auto;
+    }
+
+    .logo {
+      font-size: 1.5rem;
+      font-weight: 700;
+      color: var(--brand-primary);
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      letter-spacing: -0.02em;
+    }
+
+    .logo i {
+      font-size: 1.7rem;
+      color: var(--brand-primary);
+    }
+
+    .nav-links {
+      display: flex;
+      align-items: center;
+      gap: 2rem;
+      list-style: none;
+    }
+
+    .nav-links a {
+      text-decoration: none;
+      color: var(--neutral-700);
+      font-weight: 500;
+      font-size: 0.95rem;
+      transition: var(--transition);
+      position: relative;
+    }
+
+    .nav-links a:hover {
+      color: var(--brand-primary);
+    }
+
+    .nav-actions {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+    }
+
+    .hamburger {
+      display: none;
+      background: none;
+      border: none;
+      font-size: 1.7rem;
+      color: var(--neutral-700);
+      cursor: pointer;
+      padding: 0.25rem;
+      line-height: 1;
+    }
+
+    /* Mobile menu */
+    .mobile-menu {
+      display: none;
+      flex-direction: column;
+      background: white;
+      padding: 1.5rem;
+      border-bottom: 1px solid var(--neutral-200);
+      box-shadow: var(--shadow-md);
+    }
+
+    .mobile-menu.active {
+      display: flex;
+    }
+
+    .mobile-menu a {
+      padding: 0.75rem 0;
+      text-decoration: none;
+      color: var(--neutral-700);
+      font-weight: 500;
+      border-bottom: 1px solid var(--neutral-100);
+    }
+
+    .mobile-menu .btn {
+      margin-top: 1rem;
+      width: 100%;
+    }
+
+    /* ========== HERO ========== */
+    .hero {
+      padding: 4rem 1.5rem 5rem;
+      background: linear-gradient(145deg, #ffffff 0%, #f8fafc 100%);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .hero::after {
+      content: '';
+      position: absolute;
+      top: -30%;
+      right: -10%;
+      width: 500px;
+      height: 500px;
+      background: radial-gradient(circle, rgba(79, 70, 229, 0.06) 0%, transparent 70%);
+      border-radius: 50%;
+      pointer-events: none;
+    }
+
+    .hero-grid {
+      max-width: 1280px;
+      margin: 0 auto;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 4rem;
+      align-items: center;
+      position: relative;
+      z-index: 2;
+    }
+
+    .hero h1 {
+      font-size: 3.5rem;
+      font-weight: 700;
+      line-height: 1.2;
+      letter-spacing: -0.03em;
+      color: var(--neutral-900);
+      margin-bottom: 1.5rem;
+    }
+
+    .hero h1 span {
+      color: var(--brand-primary);
+    }
+
+    .hero p {
+      font-size: 1.2rem;
+      color: var(--neutral-600);
+      margin-bottom: 2rem;
+      max-width: 90%;
+    }
+
+    .hero-buttons {
+      display: flex;
+      gap: 1rem;
+      flex-wrap: wrap;
+    }
+
+    /* Mockup card */
+    .mockup-card {
+      background: white;
+      border-radius: 2rem;
+      box-shadow: var(--shadow-lg);
+      padding: 2rem 1.75rem;
+      border: 1px solid var(--neutral-200);
+      max-width: 400px;
+      margin-left: auto;
+      transform: rotate(1deg);
+      transition: var(--transition);
+    }
+
+    .mockup-card:hover {
+      transform: rotate(0deg) scale(1.01);
+    }
+
+    .mockup-label {
+      font-size: 0.75rem;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      color: var(--neutral-500);
+      font-weight: 600;
+      margin-bottom: 0.25rem;
+    }
+
+    .mockup-token {
+      font-size: 3rem;
+      font-weight: 700;
+      color: var(--brand-primary);
+      line-height: 1.1;
+      margin-bottom: 0.5rem;
+    }
+
+    .mockup-detail {
+      display: flex;
+      justify-content: space-between;
+      font-size: 0.95rem;
+      color: var(--neutral-600);
+      padding: 0.5rem 0;
+      border-bottom: 1px solid var(--neutral-100);
+    }
+
+    .mockup-detail strong {
+      color: var(--neutral-800);
+    }
+
+    /* ========== SECTIONS ========== */
+    .section {
+      padding: 5rem 1.5rem;
+    }
+
+    .section-title {
+      font-size: 2.25rem;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+      text-align: center;
+      margin-bottom: 0.75rem;
+      color: var(--neutral-900);
+    }
+
+    .section-sub {
+      text-align: center;
+      color: var(--neutral-500);
+      max-width: 600px;
+      margin: 0 auto 3rem;
+      font-size: 1.1rem;
+    }
+
+    .grid-3 {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 1.5rem;
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+
+    .grid-4 {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 1.5rem;
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+
+    .grid-6 {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 1.5rem;
+      max-width: 1000px;
+      margin: 0 auto;
+    }
+
+    .feature-card {
+      background: white;
+      border-radius: var(--card-radius);
+      padding: 1.75rem 1.5rem;
+      box-shadow: var(--shadow-sm);
+      border: 1px solid var(--neutral-200);
+      transition: var(--transition);
+    }
+
+    .feature-card:hover {
+      box-shadow: var(--shadow-md);
+      transform: translateY(-3px);
+      border-color: var(--brand-primary-light);
+    }
+
+    .feature-icon {
+      width: 3rem;
+      height: 3rem;
+      border-radius: 1rem;
+      background: var(--brand-primary-light);
+      color: var(--brand-primary);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.4rem;
+      margin-bottom: 1.25rem;
+    }
+
+    .feature-card h3 {
+      font-size: 1.2rem;
+      font-weight: 600;
+      margin-bottom: 0.5rem;
+    }
+
+    .feature-card p {
+      color: var(--neutral-500);
+      font-size: 0.95rem;
+    }
+
+    /* Use case pills */
+    .usecase-grid {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 1rem;
+      max-width: 900px;
+      margin: 0 auto;
+    }
+
+    .usecase-pill {
+      background: white;
+      padding: 0.9rem 1.8rem;
+      border-radius: 3rem;
+      font-weight: 500;
+      color: var(--neutral-700);
+      box-shadow: var(--shadow-sm);
+      border: 1px solid var(--neutral-200);
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      transition: var(--transition);
+    }
+
+    .usecase-pill i {
+      color: var(--brand-primary);
+    }
+
+    .usecase-pill:hover {
+      border-color: var(--brand-primary);
+      background: var(--brand-primary-light);
+    }
+
+    /* Stats */
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 2rem;
+      max-width: 900px;
+      margin: 0 auto;
+      text-align: center;
+    }
+
+    .stat-number {
+      font-size: 2.75rem;
+      font-weight: 700;
+      color: var(--brand-primary);
+      line-height: 1.2;
+    }
+
+    .stat-label {
+      color: var(--neutral-500);
+      font-weight: 500;
+      font-size: 1.05rem;
+    }
+
+    .stat-note {
+      text-align: center;
+      color: var(--neutral-400);
+      font-size: 0.85rem;
+      margin-top: 2rem;
+    }
+
+    /* FAQ */
+    .faq-list {
+      max-width: 750px;
+      margin: 0 auto;
+    }
+
+    .faq-item {
+      background: white;
+      border-radius: var(--card-radius-sm);
+      margin-bottom: 1rem;
+      border: 1px solid var(--neutral-200);
+      overflow: hidden;
+    }
+
+    .faq-question {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 1.25rem 1.5rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: var(--transition);
+      gap: 1rem;
+    }
+
+    .faq-question:hover {
+      background: var(--neutral-50);
+    }
+
+    .faq-question i {
+      transition: transform 0.25s ease;
+      color: var(--brand-primary);
+    }
+
+    .faq-item.open .faq-question i {
+      transform: rotate(180deg);
+    }
+
+    .faq-answer {
+      max-height: 0;
+      overflow: hidden;
+      transition: max-height 0.3s ease, padding 0.3s ease;
+      padding: 0 1.5rem;
+      color: var(--neutral-500);
+      background: white;
+    }
+
+    .faq-item.open .faq-answer {
+      max-height: 300px;
+      padding: 0 1.5rem 1.5rem;
+    }
+
+    /* Footer */
+    .footer {
+      background: var(--neutral-900);
+      color: var(--neutral-300);
+      padding: 4rem 1.5rem 2rem;
+    }
+
+    .footer-grid {
+      max-width: 1200px;
+      margin: 0 auto;
+      display: grid;
+      grid-template-columns: 2fr 1fr 1fr 1fr;
+      gap: 2rem;
+      margin-bottom: 3rem;
+    }
+
+    .footer-brand p {
+      margin: 1rem 0 0;
+      font-size: 0.95rem;
+      max-width: 280px;
+      color: var(--neutral-400);
+    }
+
+    .footer h4 {
+      color: white;
+      margin-bottom: 1rem;
+      font-size: 1rem;
+    }
+
+    .footer ul {
+      list-style: none;
+    }
+
+    .footer ul li {
+      margin-bottom: 0.75rem;
+    }
+
+    .footer a {
+      color: var(--neutral-400);
+      text-decoration: none;
+      font-size: 0.95rem;
+      transition: var(--transition);
+    }
+
+    .footer a:hover {
+      color: white;
+    }
+
+    .footer-bottom {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding-top: 2rem;
+      border-top: 1px solid var(--neutral-700);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 0.9rem;
+      color: var(--neutral-500);
+      flex-wrap: wrap;
+      gap: 1rem;
+    }
+
+    /* ========== DASHBOARD / APP LAYOUT ========== */
+    .app-layout {
+      display: flex;
+      min-height: 100vh;
+      background: var(--neutral-50);
+    }
+
+    .sidebar {
+      width: 280px;
+      background: white;
+      border-right: 1px solid var(--neutral-200);
+      padding: 1.5rem 1rem;
+      display: flex;
+      flex-direction: column;
+      position: sticky;
+      top: 0;
+      height: 100vh;
+      overflow-y: auto;
+      transition: var(--transition);
+      flex-shrink: 0;
+    }
+
+    .sidebar .logo {
+      margin-bottom: 2rem;
+      padding-left: 0.75rem;
+    }
+
+    .sidebar-nav {
+      list-style: none;
+      display: flex;
+      flex-direction: column;
+      gap: 0.25rem;
+      flex: 1;
+    }
+
+    .sidebar-nav a {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      padding: 0.75rem 1rem;
+      border-radius: 0.75rem;
+      text-decoration: none;
+      color: var(--neutral-600);
+      font-weight: 500;
+      transition: var(--transition);
+      font-size: 0.95rem;
+    }
+
+    .sidebar-nav a i {
+      width: 1.25rem;
+      text-align: center;
+      font-size: 1.1rem;
+    }
+
+    .sidebar-nav a:hover {
+      background: var(--neutral-100);
+      color: var(--neutral-800);
+    }
+
+    .sidebar-nav a.active {
+      background: var(--brand-primary-light);
+      color: var(--brand-primary-dark);
+      font-weight: 600;
+    }
+
+    .main-content {
+      flex: 1;
+      padding: 1.5rem 2rem 3rem;
+      min-width: 0;
+    }
+
+    .topbar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 2rem;
+      flex-wrap: wrap;
+      gap: 1rem;
+    }
+
+    .topbar h1 {
+      font-size: 1.75rem;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+    }
+
+    .topbar-actions {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+    }
+
+    .icon-btn {
+      width: 2.5rem;
+      height: 2.5rem;
+      border-radius: 50%;
+      background: white;
+      border: 1px solid var(--neutral-200);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: var(--transition);
+      color: var(--neutral-600);
+      font-size: 1.1rem;
+      position: relative;
+    }
+
+    .icon-btn:hover {
+      background: var(--neutral-100);
+      border-color: var(--neutral-300);
+    }
+
+    .icon-btn .dot {
+      position: absolute;
+      top: 0.4rem;
+      right: 0.4rem;
+      width: 8px;
+      height: 8px;
+      background: var(--danger);
+      border-radius: 50%;
+      border: 2px solid white;
+    }
+
+    /* Stat cards */
+    .stat-cards {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 1.25rem;
+      margin-bottom: 2rem;
+    }
+
+    .stat-card {
+      background: white;
+      border-radius: var(--card-radius);
+      padding: 1.5rem;
+      box-shadow: var(--shadow-sm);
+      border: 1px solid var(--neutral-200);
+      transition: var(--transition);
+    }
+
+    .stat-card:hover {
+      box-shadow: var(--shadow-md);
+    }
+
+    .stat-card .label {
+      font-size: 0.8rem;
+      text-transform: uppercase;
+      letter-spacing: 0.3px;
+      color: var(--neutral-500);
+      font-weight: 600;
+      margin-bottom: 0.5rem;
+    }
+
+    .stat-card .value {
+      font-size: 1.9rem;
+      font-weight: 700;
+      color: var(--neutral-800);
+      line-height: 1.2;
+    }
+
+    .stat-card .sub {
+      font-size: 0.85rem;
+      color: var(--neutral-500);
+      margin-top: 0.25rem;
+    }
+
+    /* Service cards */
+    .service-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+      gap: 1.25rem;
+      margin-top: 1rem;
+    }
+
+    .service-card {
+      background: white;
+      border-radius: var(--card-radius);
+      padding: 1.5rem;
+      box-shadow: var(--shadow-sm);
+      border: 1px solid var(--neutral-200);
+      transition: var(--transition);
+      display: flex;
+      flex-direction: column;
+      gap: 0.75rem;
+    }
+
+    .service-card:hover {
+      box-shadow: var(--shadow-md);
+      transform: translateY(-2px);
+      border-color: var(--brand-primary-light);
+    }
+
+    .service-card h3 {
+      font-size: 1.15rem;
+      font-weight: 600;
+    }
+
+    .service-meta {
+      display: flex;
+      justify-content: space-between;
+      font-size: 0.9rem;
+      color: var(--neutral-500);
+    }
+
+    .service-meta strong {
+      color: var(--neutral-800);
+    }
+
+    /* Category filters */
+    .category-filters {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+      margin: 1rem 0 1.5rem;
+    }
+
+    .cat-btn {
+      padding: 0.5rem 1.2rem;
+      border-radius: 2rem;
+      border: 1px solid var(--neutral-200);
+      background: white;
+      font-weight: 500;
+      font-size: 0.9rem;
+      cursor: pointer;
+      transition: var(--transition);
+      color: var(--neutral-600);
+    }
+
+    .cat-btn:hover {
+      border-color: var(--brand-primary);
+      color: var(--brand-primary);
+    }
+
+    .cat-btn.active {
+      background: var(--brand-primary);
+      color: white;
+      border-color: var(--brand-primary);
+    }
+
+    /* Search */
+    .search-bar {
+      display: flex;
+      align-items: center;
+      background: white;
+      border-radius: 3rem;
+      padding: 0.4rem 0.4rem 0.4rem 1.25rem;
+      border: 1px solid var(--neutral-200);
+      box-shadow: var(--shadow-sm);
+      max-width: 480px;
+      width: 100%;
+    }
+
+    .search-bar i {
+      color: var(--neutral-400);
+      margin-right: 0.5rem;
+    }
+
+    .search-bar input {
+      border: none;
+      outline: none;
+      flex: 1;
+      font-size: 0.95rem;
+      font-family: var(--font);
+      padding: 0.5rem 0;
+      background: transparent;
+      min-width: 0;
+    }
+
+    /* Queue page big stats */
+    .queue-hero {
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      gap: 1rem;
+      margin-bottom: 2rem;
+    }
+
+    .queue-hero .stat-card {
+      text-align: center;
+      padding: 1.5rem 0.75rem;
+    }
+
+    .queue-hero .stat-card .value {
+      font-size: 1.75rem;
+    }
+
+    /* Progress bar */
+    .progress-container {
+      background: white;
+      border-radius: var(--card-radius);
+      padding: 1.5rem;
+      box-shadow: var(--shadow-sm);
+      border: 1px solid var(--neutral-200);
+      margin-bottom: 2rem;
+    }
+
+    .progress-track {
+      height: 12px;
+      background: var(--neutral-200);
+      border-radius: 1rem;
+      overflow: hidden;
+      margin: 1rem 0 0.5rem;
+    }
+
+    .progress-fill {
+      height: 100%;
+      background: linear-gradient(90deg, var(--brand-primary), #818cf8);
+      border-radius: 1rem;
+      width: 0%;
+      transition: width 0.5s ease;
+    }
+
+    /* Timeline */
+    .timeline {
+      display: flex;
+      flex-direction: column;
+      gap: 0;
+      margin: 1.5rem 0;
+    }
+
+    .timeline-item {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      padding: 0.6rem 0;
+      font-size: 0.95rem;
+      color: var(--neutral-500);
+    }
+
+    .timeline-item .dot {
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+      background: var(--neutral-300);
+      flex-shrink: 0;
+      position: relative;
+    }
+
+    .timeline-item .dot.serving {
+      background: var(--success);
+      box-shadow: 0 0 0 4px rgba(16, 185, 129, 0.2);
+    }
+
+    .timeline-item .dot.completed {
+      background: var(--neutral-400);
+    }
+
+    .timeline-item .dot.mine {
+      background: var(--brand-primary);
+      box-shadow: 0 0 0 4px rgba(79, 70, 229, 0.2);
+      width: 16px;
+      height: 16px;
+    }
+
+    .timeline-item .dot.waiting {
+      background: var(--neutral-200);
+      border: 2px solid var(--neutral-300);
+    }
+
+    .timeline-item strong {
+      color: var(--neutral-800);
+      min-width: 60px;
+    }
+
+    /* Table */
+    .table-wrap {
+      overflow-x: auto;
+      border-radius: var(--card-radius);
+      background: white;
+      box-shadow: var(--shadow-sm);
+      border: 1px solid var(--neutral-200);
+      -webkit-overflow-scrolling: touch;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.9rem;
+      min-width: 600px;
+    }
+
+    thead {
+      background: var(--neutral-50);
+    }
+
+    th {
+      text-align: left;
+      padding: 0.9rem 1rem;
+      font-weight: 600;
+      color: var(--neutral-500);
+      font-size: 0.8rem;
+      text-transform: uppercase;
+      letter-spacing: 0.3px;
+      white-space: nowrap;
+    }
+
+    td {
+      padding: 0.9rem 1rem;
+      border-bottom: 1px solid var(--neutral-100);
+      color: var(--neutral-700);
+      vertical-align: middle;
+    }
+
+    tr:last-child td {
+      border-bottom: none;
+    }
+
+    tr:hover td {
+      background: var(--neutral-50);
+    }
+
+    .table-actions {
+      display: flex;
+      gap: 0.4rem;
+      flex-wrap: wrap;
+    }
+
+    /* Modal */
+    .modal-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(15, 23, 42, 0.5);
+      backdrop-filter: blur(4px);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 1000;
+      opacity: 0;
+      visibility: hidden;
+      transition: opacity 0.25s ease, visibility 0.25s ease;
+      padding: 1rem;
+    }
+
+    .modal-overlay.active {
+      opacity: 1;
+      visibility: visible;
+    }
+
+    .modal {
+      background: white;
+      border-radius: 1.75rem;
+      padding: 2rem;
+      max-width: 480px;
+      width: 100%;
+      box-shadow: var(--shadow-lg);
+      transform: translateY(20px) scale(0.97);
+      transition: transform 0.25s ease;
+      max-height: 90vh;
+      overflow-y: auto;
+    }
+
+    .modal-overlay.active .modal {
+      transform: translateY(0) scale(1);
+    }
+
+    .modal-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 1.5rem;
+    }
+
+    .modal-header h2 {
+      font-size: 1.35rem;
+      font-weight: 700;
+    }
+
+    .modal-close {
+      background: none;
+      border: none;
+      font-size: 1.5rem;
+      cursor: pointer;
+      color: var(--neutral-400);
+      line-height: 1;
+      padding: 0.25rem;
+      transition: var(--transition);
+    }
+
+    .modal-close:hover {
+      color: var(--neutral-800);
+    }
+
+    .modal-detail {
+      display: flex;
+      justify-content: space-between;
+      padding: 0.65rem 0;
+      border-bottom: 1px solid var(--neutral-100);
+      font-size: 0.95rem;
+    }
+
+    .modal-detail:last-of-type {
+      border-bottom: none;
+    }
+
+    .modal-detail .label {
+      color: var(--neutral-500);
+    }
+
+    .modal-detail .value {
+      font-weight: 600;
+      color: var(--neutral-800);
+    }
+
+    .modal-actions {
+      display: flex;
+      gap: 0.75rem;
+      margin-top: 1.5rem;
+      justify-content: flex-end;
+      flex-wrap: wrap;
+    }
+
+    /* Toast */
+    .toast-container {
+      position: fixed;
+      bottom: 1.5rem;
+      right: 1.5rem;
+      z-index: 2000;
+      display: flex;
+      flex-direction: column;
+      gap: 0.75rem;
+      max-width: 360px;
+      width: calc(100% - 3rem);
+      pointer-events: none;
+    }
+
+    .toast {
+      background: white;
+      border-radius: 1rem;
+      padding: 1rem 1.25rem;
+      box-shadow: var(--shadow-lg);
+      border-left: 4px solid var(--brand-primary);
+      display: flex;
+      align-items: flex-start;
+      gap: 0.75rem;
+      pointer-events: auto;
+      animation: slideIn 0.3s ease forwards;
+      font-size: 0.9rem;
+    }
+
+    .toast.success {
+      border-left-color: var(--success);
+    }
+
+    .toast.warning {
+      border-left-color: var(--warning);
+    }
+
+    .toast.danger {
+      border-left-color: var(--danger);
+    }
+
+    .toast i {
+      font-size: 1.2rem;
+      margin-top: 0.1rem;
+    }
+
+    .toast.success i {
+      color: var(--success);
+    }
+
+    .toast.warning i {
+      color: var(--warning);
+    }
+
+    .toast.danger i {
+      color: var(--danger);
+    }
+
+    .toast .toast-content {
+      flex: 1;
+    }
+
+    .toast .toast-title {
+      font-weight: 600;
+      color: var(--neutral-800);
+      margin-bottom: 0.15rem;
+    }
+
+    .toast .toast-msg {
+      color: var(--neutral-500);
+      font-size: 0.85rem;
+    }
+
+    @keyframes slideIn {
+      from {
+        opacity: 0;
+        transform: translateX(40px);
+      }
+      to {
+        opacity: 1;
+        transform: translateX(0);
+      }
+    }
+
+    /* Empty state */
+    .empty-state {
+      text-align: center;
+      padding: 3rem 1.5rem;
+      background: white;
+      border-radius: var(--card-radius);
+      border: 1px dashed var(--neutral-300);
+    }
+
+    .empty-state i {
+      font-size: 3rem;
+      color: var(--neutral-300);
+      margin-bottom: 1rem;
+    }
+
+    .empty-state h3 {
+      font-size: 1.25rem;
+      margin-bottom: 0.5rem;
+    }
+
+    .empty-state p {
+      color: var(--neutral-500);
+      margin-bottom: 1.5rem;
+      max-width: 400px;
+      margin-left: auto;
+      margin-right: auto;
+    }
+
+    /* Bottom nav (mobile) */
+    .bottom-nav {
+      display: none;
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      background: white;
+      border-top: 1px solid var(--neutral-200);
+      padding: 0.5rem 0.25rem;
+      z-index: 80;
+      box-shadow: 0 -4px 12px rgba(0,0,0,0.04);
+    }
+
+    .bottom-nav-inner {
+      display: flex;
+      justify-content: space-around;
+      align-items: center;
+      max-width: 500px;
+      margin: 0 auto;
+    }
+
+    .bottom-nav a {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 0.2rem;
+      text-decoration: none;
+      color: var(--neutral-500);
+      font-size: 0.7rem;
+      font-weight: 500;
+      padding: 0.3rem 0.5rem;
+      border-radius: 0.5rem;
+      transition: var(--transition);
+      min-width: 60px;
+    }
+
+    .bottom-nav a i {
+      font-size: 1.2rem;
+    }
+
+    .bottom-nav a.active {
+      color: var(--brand-primary);
+    }
+
+    /* Skeleton */
+    .skeleton {
+      background: linear-gradient(90deg, var(--neutral-200) 25%, var(--neutral-100) 50%, var(--neutral-200) 75%);
+      background-size: 200% 100%;
+      animation: shimmer 1.5s infinite;
+      border-radius: 0.5rem;
+      height: 1rem;
+    }
+
+    @keyframes shimmer {
+      0% { background-position: 200% 0; }
+      100% { background-position: -200% 0; }
+    }
+
+    /* ========== RESPONSIVE ========== */
+    @media (max-width: 1024px) {
+      .hero-grid {
+        grid-template-columns: 1fr;
+        gap: 2rem;
+      }
+
+      .hero h1 {
+        font-size: 2.75rem;
+      }
+
+      .hero p {
+        max-width: 100%;
+      }
+
+      .mockup-card {
+        margin: 0 auto;
+      }
+
+      .grid-4 {
+        grid-template-columns: repeat(2, 1fr);
+      }
+
+      .stat-cards {
+        grid-template-columns: repeat(2, 1fr);
+      }
+
+      .queue-hero {
+        grid-template-columns: repeat(3, 1fr);
+      }
+
+      .footer-grid {
+        grid-template-columns: 1fr 1fr;
+      }
+
+      .sidebar {
+        width: 240px;
+      }
+    }
+
+    @media (max-width: 768px) {
+      .nav-links {
+        display: none;
+      }
+
+      .nav-actions .btn-outline {
+        display: none;
+      }
+
+      .hamburger {
+        display: block;
+      }
+
+      .section {
+        padding: 3rem 1rem;
+      }
+
+      .section-title {
+        font-size: 1.75rem;
+      }
+
+      .grid-3,
+      .grid-6 {
+        grid-template-columns: 1fr;
+      }
+
+      .stats-grid {
+        grid-template-columns: 1fr;
+        gap: 1.5rem;
+      }
+
+      .app-layout {
+        flex-direction: column;
+      }
+
+      .sidebar {
+        width: 100%;
+        height: auto;
+        position: relative;
+        border-right: none;
+        border-bottom: 1px solid var(--neutral-200);
+        padding: 1rem;
+        flex-direction: row;
+        align-items: center;
+        justify-content: space-between;
+        overflow-x: auto;
+      }
+
+      .sidebar .logo {
+        margin-bottom: 0;
+        font-size: 1.3rem;
+      }
+
+      .sidebar-nav {
+        flex-direction: row;
+        gap: 0.25rem;
+        overflow-x: auto;
+        flex: 0;
+      }
+
+      .sidebar-nav a {
+        padding: 0.5rem 0.75rem;
+        font-size: 0.85rem;
+        white-space: nowrap;
+      }
+
+      .sidebar-nav a i {
+        font-size: 1rem;
+      }
+
+      .main-content {
+        padding: 1rem 1rem 5rem;
+      }
+
+      .stat-cards {
+        grid-template-columns: 1fr 1fr;
+        gap: 0.75rem;
+      }
+
+      .stat-card {
+        padding: 1rem;
+      }
+
+      .stat-card .value {
+        font-size: 1.4rem;
+      }
+
+      .queue-hero {
+        grid-template-columns: 1fr 1fr;
+        gap: 0.75rem;
+      }
+
+      .queue-hero .stat-card {
+        padding: 1rem 0.5rem;
+      }
+
+      .queue-hero .stat-card .value {
+        font-size: 1.25rem;
+      }
+
+      .service-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .bottom-nav {
+        display: block;
+      }
+
+      /* Hide sidebar nav on mobile when bottom nav present? keep both */
+      .table-wrap {
+        border: none;
+        box-shadow: none;
+        background: transparent;
+        overflow: visible;
+      }
+
+      table {
+        min-width: 0;
+        display: block;
+      }
+
+      thead {
+        display: none;
+      }
+
+      tbody, tr, td {
+        display: block;
+        width: 100%;
+      }
+
+      tr {
+        background: white;
+        border-radius: var(--card-radius-sm);
+        margin-bottom: 1rem;
+        box-shadow: var(--shadow-sm);
+        border: 1px solid var(--neutral-200);
+        padding: 0.75rem 1rem;
+      }
+
+      td {
+        border: none;
+        padding: 0.4rem 0;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 1rem;
+      }
+
+      td::before {
+        content: attr(data-label);
+        font-weight: 600;
+        color: var(--neutral-500);
+        font-size: 0.8rem;
+        text-transform: uppercase;
+        letter-spacing: 0.3px;
+        flex-shrink: 0;
+      }
+
+      td:last-child {
+        justify-content: flex-end;
+        padding-top: 0.5rem;
+        border-top: 1px solid var(--neutral-100);
+        margin-top: 0.5rem;
+      }
+
+      td:last-child::before {
+        display: none;
+      }
+
+      .modal {
+        padding: 1.5rem;
+        margin: 1rem;
+        max-width: 100%;
+      }
+
+      .hero h1 {
+        font-size: 2.25rem;
+      }
+
+      .hero p {
+        font-size: 1.05rem;
+      }
+
+      .hero-buttons .btn {
+        flex: 1;
+        min-width: 140px;
+      }
+
+      .footer-grid {
+        grid-template-columns: 1fr;
+        gap: 1.5rem;
+      }
+
+      .footer-bottom {
+        flex-direction: column;
+        text-align: center;
+      }
+    }
+
+    @media (max-width: 480px) {
+      .hero h1 {
+        font-size: 1.9rem;
+      }
+
+      .stat-cards {
+        grid-template-columns: 1fr 1fr;
+      }
+
+      .queue-hero {
+        grid-template-columns: 1fr 1fr;
+      }
+
+      .modal-actions {
+        flex-direction: column;
+      }
+
+      .modal-actions .btn {
+        width: 100%;
+      }
+
+      .topbar h1 {
+        font-size: 1.35rem;
+      }
+
+      .sidebar .logo {
+        font-size: 1.1rem;
+      }
+
+      .sidebar-nav a span {
+        display: none;
+      }
+
+      .sidebar-nav a i {
+        font-size: 1.2rem;
+      }
+    }
+
+    @media (max-width: 360px) {
+      .container {
+        padding: 0 1rem;
+      }
+
+      .section {
+        padding: 2.5rem 0.75rem;
+      }
+
+      .stat-cards {
+        grid-template-columns: 1fr;
+      }
+
+      .queue-hero {
+        grid-template-columns: 1fr 1fr;
+      }
+    }
+
+    /* Page visibility */
+    .page-section {
+      display: none;
+    }
+
+    .page-section.active {
+      display: block;
+    }
+
+    /* Admin controls */
+    .admin-controls {
+      display: flex;
+      gap: 1rem;
+      flex-wrap: wrap;
+      margin: 1.5rem 0;
+    }
+
+    .admin-controls .btn {
+      padding: 1rem 2rem;
+      font-size: 1.05rem;
+      border-radius: 1rem;
+    }
+
+    /* Chart bars (pure CSS) */
+    .chart-bars {
+      display: flex;
+      align-items: flex-end;
+      gap: 0.75rem;
+      height: 160px;
+      padding: 1rem 0;
+    }
+
+    .chart-bar-wrapper {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 0.5rem;
+      height: 100%;
+      justify-content: flex-end;
+    }
+
+    .chart-bar {
+      width: 100%;
+      max-width: 48px;
+      background: linear-gradient(180deg, var(--brand-primary), #818cf8);
+      border-radius: 0.5rem 0.5rem 0 0;
+      transition: height 0.6s ease;
+      min-height: 4px;
+    }
+
+    .chart-label {
+      font-size: 0.75rem;
+      color: var(--neutral-500);
+      text-align: center;
+    }
+
+    /* Notification list */
+    .notif-list {
+      display: flex;
+      flex-direction: column;
+      gap: 0.75rem;
+    }
+
+    .notif-item {
+      display: flex;
+      gap: 1rem;
+      padding: 1rem;
+      background: white;
+      border-radius: var(--card-radius-sm);
+      border: 1px solid var(--neutral-200);
+      align-items: flex-start;
+    }
+
+    .notif-icon {
+      width: 2.5rem;
+      height: 2.5rem;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1rem;
+      flex-shrink: 0;
+    }
+
+    .notif-icon.info {
+      background: var(--brand-primary-light);
+      color: var(--brand-primary);
+    }
+
+    .notif-icon.success {
+      background: var(--success-light);
+      color: var(--success);
+    }
+
+    .notif-icon.warning {
+      background: var(--warning-light);
+      color: var(--warning);
+    }
+
+    .notif-content h4 {
+      font-size: 0.95rem;
+      margin-bottom: 0.2rem;
+    }
+
+    .notif-content p {
+      font-size: 0.85rem;
+      color: var(--neutral-500);
+    }
+
+    .notif-time {
+      font-size: 0.75rem;
+      color: var(--neutral-400);
+      margin-top: 0.25rem;
+    }
+
+    /* Profile */
+    .profile-header {
+      display: flex;
+      align-items: center;
+      gap: 1.5rem;
+      margin-bottom: 2rem;
+      flex-wrap: wrap;
+    }
+
+    .avatar {
+      width: 4rem;
+      height: 4rem;
+      border-radius: 50%;
+      background: var(--brand-primary-light);
+      color: var(--brand-primary);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.75rem;
+      font-weight: 700;
+      flex-shrink: 0;
+    }
+
+    /* Form */
+    .form-group {
+      margin-bottom: 1rem;
+    }
+
+    .form-group label {
+      display: block;
+      font-weight: 600;
+      font-size: 0.85rem;
+      color: var(--neutral-700);
+      margin-bottom: 0.4rem;
+    }
+
+    .form-group input,
+    .form-group select,
+    .form-group textarea {
+      width: 100%;
+      padding: 0.7rem 1rem;
+      border: 1px solid var(--neutral-300);
+      border-radius: 0.75rem;
+      font-family: var(--font);
+      font-size: 0.95rem;
+      transition: var(--transition);
+      background: white;
+      color: var(--neutral-800);
+    }
+
+    .form-group input:focus,
+    .form-group select:focus,
+    .form-group textarea:focus {
+      outline: none;
+      border-color: var(--brand-primary);
+      box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.15);
+    }
+
+    .form-group .error-msg {
+      color: var(--danger);
+      font-size: 0.8rem;
+      margin-top: 0.25rem;
+      display: none;
+    }
+
+    .form-group.invalid input,
+    .form-group.invalid select {
+      border-color: var(--danger);
+    }
+
+    .form-group.invalid .error-msg {
+      display: block;
+    }
+
+    /* Toggle switch */
+    .toggle-switch {
+      position: relative;
+      display: inline-block;
+      width: 48px;
+      height: 26px;
+      flex-shrink: 0;
+    }
+
+    .toggle-switch input {
+      opacity: 0;
+      width: 0;
+      height: 0;
+    }
+
+    .toggle-slider {
+      position: absolute;
+      cursor: pointer;
+      inset: 0;
+      background: var(--neutral-300);
+      transition: 0.3s;
+      border-radius: 26px;
+    }
+
+    .toggle-slider::before {
+      content: "";
+      position: absolute;
+      height: 20px;
+      width: 20px;
+      left: 3px;
+      bottom: 3px;
+      background: white;
+      transition: 0.3s;
+      border-radius: 50%;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+    }
+
+    .toggle-switch input:checked + .toggle-slider {
+      background: var(--brand-primary);
+    }
+
+    .toggle-switch input:checked + .toggle-slider::before {
+      transform: translateX(22px);
+    }
+
+    /* Utility spacing */
+    .mt-1 { margin-top: 0.5rem; }
+    .mt-2 { margin-top: 1rem; }
+    .mt-3 { margin-top: 1.5rem; }
+    .mb-1 { margin-bottom: 0.5rem; }
+    .mb-2 { margin-bottom: 1rem; }
+    .mb-3 { margin-bottom: 1.5rem; }
+    .flex { display: flex; }
+    .flex-between { display: flex; justify-content: space-between; align-items: center; }
+    .flex-wrap { flex-wrap: wrap; }
+    .gap-1 { gap: 0.5rem; }
+    .gap-2 { gap: 1rem; }
+    .text-center { text-align: center; }
+    .text-muted { color: var(--neutral-500); }
+    .text-sm { font-size: 0.9rem; }
+
+    /* Focus */
+    :focus-visible {
+      outline: 2px solid var(--brand-primary);
+      outline-offset: 2px;
+    }
+
+    button:focus-visible,
+    a:focus-visible,
+    input:focus-visible,
+    select:focus-visible {
+      outline: 2px solid var(--brand-primary);
+      outline-offset: 2px;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- ==================== GLOBAL DEMO BANNER ==================== -->
+  <div class="demo-banner" id="demoBanner">
+    <i class="fas fa-flask"></i> DEMO MODE — All data is simulated. No real bookings.
+  </div>
+
+  <!-- ==================== LANDING PAGE ==================== -->
+  <div id="page-landing" class="page-section active">
+
+    <!-- Navbar -->
+    <nav class="navbar" aria-label="Main navigation">
+      <div class="nav-container">
+        <a href="#" class="logo" data-nav="landing" aria-label="QueueLess home">
+          <i class="fas fa-queue"></i> QueueLess
+        </a>
+
+        <ul class="nav-links" role="menubar">
+          <li role="none"><a href="#home" role="menuitem" data-scroll="home">Home</a></li>
+          <li role="none"><a href="#how" role="menuitem" data-scroll="how">How It Works</a></li>
+          <li role="none"><a href="#features" role="menuitem" data-scroll="features">Features</a></li>
+          <li role="none"><a href="#business" role="menuitem" data-scroll="business">For Businesses</a></li>
+          <li role="none"><a href="#faq" role="menuitem" data-scroll="faq">FAQ</a></li>
+        </ul>
+
+        <div class="nav-actions">
+          <button class="btn btn-outline btn-sm" data-nav="dashboard" aria-label="Join Queue">Join Queue</button>
+          <button class="btn btn-primary btn-sm" data-nav="admin" aria-label="Admin Login">
+            <i class="fas fa-lock"></i> Admin
+          </button>
+          <button class="hamburger" id="hamburgerBtn" aria-label="Toggle menu" aria-expanded="false">
+            <i class="fas fa-bars"></i>
+          </button>
+        </div>
+      </div>
+
+      <!-- Mobile menu -->
+      <div class="mobile-menu" id="mobileMenu">
+        <a href="#home" data-scroll="home">Home</a>
+        <a href="#how" data-scroll="how">How It Works</a>
+        <a href="#features" data-scroll="features">Features</a>
+        <a href="#business" data-scroll="business">For Businesses</a>
+        <a href="#faq" data-scroll="faq">FAQ</a>
+        <button class="btn btn-outline btn-block" data-nav="dashboard">Join Queue</button>
+        <button class="btn btn-primary btn-block" data-nav="admin">Admin Login</button>
+      </div>
+    </nav>
+
+    <!-- Hero -->
+    <section class="hero" id="home">
+      <div class="hero-grid">
+        <div>
+          <h1>Your place in line, <span>without standing in line.</span></h1>
+          <p>QueueLess lets you take a digital token, track your position in real time, and get notified when it’s your turn. Skip the waiting. Keep your place.</p>
+          <div class="hero-buttons">
+            <button class="btn btn-primary" data-nav="dashboard">
+              <i class="fas fa-ticket-alt"></i> Join a Queue
+            </button>
+            <button class="btn btn-outline" data-scroll="how">
+              <i class="fas fa-play-circle"></i> See How It Works
+            </button>
+          </div>
+        </div>
+
+        <div class="mockup-card" aria-label="Queue status preview">
+          <div class="mockup-label">CURRENT QUEUE</div>
+          <div class="mockup-token">Q047</div>
+          <div class="mockup-detail"><span>12 people ahead</span><strong>~18 min</strong></div>
+          <div class="mockup-detail"><span>Estimated wait</span><strong>10:42 AM</strong></div>
+          <div class="mockup-detail"><span>Your turn</span><strong>Now serving Q035</strong></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- How It Works -->
+    <section class="section" id="how" style="background: white;">
+      <div class="container">
+        <h2 class="section-title">How It Works</h2>
+        <p class="section-sub">Four simple steps to skip the physical line.</p>
+
+        <div class="grid-4">
+          <div class="feature-card" style="text-align:center;">
+            <div class="feature-icon" style="margin:0 auto 1.25rem;"><i class="fas fa-search"></i></div>
+            <h3>1. Find a service</h3>
+            <p>Search clinics, banks, colleges, and more near you.</p>
+          </div>
+          <div class="feature-card" style="text-align:center;">
+            <div class="feature-icon" style="margin:0 auto 1.25rem;"><i class="fas fa-ticket-alt"></i></div>
+            <h3>2. Take a token</h3>
+            <p>Get a digital token instantly — no paper, no waiting.</p>
+          </div>
+          <div class="feature-card" style="text-align:center;">
+            <div class="feature-icon" style="margin:0 auto 1.25rem;"><i class="fas fa-map-pin"></i></div>
+            <h3>3. Track your position</h3>
+            <p>See live queue movement and estimated wait time.</p>
+          </div>
+          <div class="feature-card" style="text-align:center;">
+            <div class="feature-icon" style="margin:0 auto 1.25rem;"><i class="fas fa-bell"></i></div>
+            <h3>4. Get notified</h3>
+            <p>We’ll ping you when it’s almost your turn.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Features -->
+    <section class="section" id="features" style="background: var(--neutral-50);">
+      <div class="container">
+        <h2 class="section-title">Everything you need to skip the wait</h2>
+        <p class="section-sub">Built for modern service centers and the people they serve.</p>
+
+        <div class="grid-3">
+          <div class="feature-card">
+            <div class="feature-icon"><i class="fas fa-ticket-alt"></i></div>
+            <h3>Digital Tokens</h3>
+            <p>Generate unique tokens instantly from your phone. No paper required.</p>
+          </div>
+          <div class="feature-card">
+            <div class="feature-icon"><i class="fas fa-chart-line"></i></div>
+            <h3>Live Queue Tracking</h3>
+            <p>Watch the queue move in real time with automatic updates.</p>
+          </div>
+          <div class="feature-card">
+            <div class="feature-icon"><i class="fas fa-clock"></i></div>
+            <h3>Wait-Time Estimates</h3>
+            <p>Smart estimates based on service speed and queue length.</p>
+          </div>
+          <div class="feature-card">
+            <div class="feature-icon"><i class="fas fa-bell"></i></div>
+            <h3>Notifications</h3>
+            <p>Get notified when you’re 5th, 3rd, or next in line.</p>
+          </div>
+          <div class="feature-card">
+            <div class="feature-icon"><i class="fas fa-layer-group"></i></div>
+            <h3>Multiple Services</h3>
+            <p>One app for clinics, banks, colleges, and government offices.</p>
+          </div>
+          <div class="feature-card">
+            <div class="feature-icon"><i class="fas fa-sliders-h"></i></div>
+            <h3>Admin Dashboard</h3>
+            <p>Manage queues, call next, skip, and complete customers easily.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Use Cases -->
+    <section class="section" id="business" style="background: white;">
+      <div class="container">
+        <h2 class="section-title">Made for every kind of service center</h2>
+        <p class="section-sub">QueueLess adapts to your environment — from clinics to banks.</p>
+
+        <div class="usecase-grid">
+          <div class="usecase-pill"><i class="fas fa-hospital"></i> Hospitals</div>
+          <div class="usecase-pill"><i class="fas fa-graduation-cap"></i> Colleges</div>
+          <div class="usecase-pill"><i class="fas fa-university"></i> Banks</div>
+          <div class="usecase-pill"><i class="fas fa-landmark"></i> Government Offices</div>
+          <div class="usecase-pill"><i class="fas fa-cut"></i> Salons</div>
+          <div class="usecase-pill"><i class="fas fa-utensils"></i> Restaurants</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Stats -->
+    <section class="section" style="background: var(--neutral-50);">
+      <div class="container">
+        <h2 class="section-title">Trusted by thousands of service centers*</h2>
+        <p class="section-sub">*Demo metrics for illustration purposes.</p>
+
+        <div class="stats-grid">
+          <div>
+            <div class="stat-number">50K+</div>
+            <div class="stat-label">Queues Managed</div>
+          </div>
+          <div>
+            <div class="stat-number">120K+</div>
+            <div class="stat-label">Tokens Issued</div>
+          </div>
+          <div>
+            <div class="stat-number">35K+</div>
+            <div class="stat-label">Hours Saved</div>
+          </div>
+        </div>
+        <p class="stat-note">These are demo/product metrics, not real-world claims.</p>
+      </div>
+    </section>
+
+    <!-- FAQ -->
+    <section class="section" id="faq" style="background: white;">
+      <div class="container">
+        <h2 class="section-title">Frequently Asked Questions</h2>
+        <p class="section-sub">Everything you need to know about QueueLess.</p>
+
+        <div class="faq-list">
+          <div class="faq-item">
+            <div class="faq-question" role="button" tabindex="0" aria-expanded="false">
+              <span>Is QueueLess free to use?</span>
+              <i class="fas fa-chevron-down"></i>
+            </div>
+            <div class="faq-answer">
+              <p>Yes! This demo version of QueueLess is completely free to use and explore. It runs entirely in your browser with simulated data.</p>
+            </div>
+          </div>
+          <div class="faq-item">
+            <div class="faq-question" role="button" tabindex="0" aria-expanded="false">
+              <span>Do I need to create an account?</span>
+              <i class="fas fa-chevron-down"></i>
+            </div>
+            <div class="faq-answer">
+              <p>No account is needed for this demo. Your queue data is stored locally in your browser using localStorage.</p>
+            </div>
+          </div>
+          <div class="faq-item">
+            <div class="faq-question" role="button" tabindex="0" aria-expanded="false">
+              <span>How accurate is the wait time estimate?</span>
+              <i class="fas fa-chevron-down"></i>
+            </div>
+            <div class="faq-answer">
+              <p>Estimates are based on the average service time of the selected service and the number of people ahead of you. In this demo, they update dynamically as the queue advances.</p>
+            </div>
+          </div>
+          <div class="faq-item">
+            <div class="faq-question" role="button" tabindex="0" aria-expanded="false">
+              <span>Can I use QueueLess on my phone?</span>
+              <i class="fas fa-chevron-down"></i>
+            </div>
+            <div class="faq-answer">
+              <p>Absolutely! QueueLess is fully responsive and optimized for mobile, tablet, and desktop devices.</p>
+            </div>
+          </div>
+          <div class="faq-item">
+            <div class="faq-question" role="button" tabindex="0" aria-expanded="false">
+              <span>What happens if I leave the queue?</span>
+              <i class="fas fa-chevron-down"></i>
+            </div>
+            <div class="faq-answer">
+              <p>You can leave the queue at any time from the Active Queue page. Your token will be removed and the queue will adjust accordingly.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="footer">
+      <div class="footer-grid">
+        <div class="footer-brand">
+          <div class="logo" style="color: white; margin-bottom: 0.5rem;">
+            <i class="fas fa-queue" style="color: #818cf8;"></i> QueueLess
+          </div>
+          <p>Skip the waiting. Keep your place. The smart digital queue management platform for modern service centers.</p>
+        </div>
+        <div>
+          <h4>Product</h4>
+          <ul>
+            <li><a href="#features" data-scroll="features">Features</a></li>
+            <li><a href="#how" data-scroll="how">How It Works</a></li>
+            <li><a href="#business" data-scroll="business">Use Cases</a></li>
+            <li><a href="#faq" data-scroll="faq">FAQ</a></li>
+          </ul>
+        </div>
+        <div>
+          <h4>Company</h4>
+          <ul>
+            <li><a href="#" data-nav="landing">About</a></li>
+            <li><a href="#" data-nav="landing">Contact</a></li>
+            <li><a href="#" data-nav="landing">Privacy</a></li>
+            <li><a href="#" data-nav="landing">Terms</a></li>
+          </ul>
+        </div>
+        <div>
+          <h4>Get Started</h4>
+          <ul>
+            <li><a href="#" data-nav="dashboard">Join a Queue</a></li>
+            <li><a href="#" data-nav="admin">Admin Dashboard</a></li>
+          </ul>
+        </div>
+      </div>
+      <div class="footer-bottom">
+        <span>&copy; 2025 QueueLess. Demo prototype for hackathon.</span>
+        <span><i class="fas fa-flask"></i> All data simulated</span>
+      </div>
+    </footer>
+  </div>
+
+  <!-- ==================== CUSTOMER DASHBOARD ==================== -->
+  <div id="page-dashboard" class="page-section">
+    <div class="app-layout">
+      <!-- Sidebar -->
+      <aside class="sidebar" aria-label="Dashboard navigation">
+        <div class="logo" data-nav="landing" style="cursor:pointer;">
+          <i class="fas fa-queue"></i> QueueLess
+        </div>
+        <ul class="sidebar-nav" role="navigation">
+          <li><a href="#" data-dash="overview" class="active"><i class="fas fa-th-large"></i> <span>Overview</span></a></li>
+          <li><a href="#" data-dash="services"><i class="fas fa-search"></i> <span>Find Services</span></a></li>
+          <li><a href="#" data-dash="myqueue"><i class="fas fa-ticket-alt"></i> <span>My Queue</span></a></li>
+          <li><a href="#" data-dash="history"><i class="fas fa-history"></i> <span>History</span></a></li>
+          <li><a href="#" data-dash="notifications"><i class="fas fa-bell"></i> <span>Notifications</span></a></li>
+          <li><a href="#" data-dash="profile"><i class="fas fa-user"></i> <span>Profile</span></a></li>
+        </ul>
+      </aside>
+
+      <!-- Main -->
+      <main class="main-content">
+        <div class="topbar">
+          <h1 id="dashTitle">Overview</h1>
+          <div class="topbar-actions">
+            <button class="icon-btn" data-dash="notifications" aria-label="Notifications">
+              <i class="fas fa-bell"></i>
+              <span class="dot" id="notifDot" style="display:none;"></span>
+            </button>
+            <button class="icon-btn" data-dash="profile" aria-label="Profile">
+              <i class="fas fa-user"></i>
+            </button>
+            <button class="icon-btn" data-nav="landing" aria-label="Back to landing">
+              <i class="fas fa-home"></i>
+            </button>
+          </div>
+        </div>
+
+        <!-- Overview -->
+        <div id="dash-overview" class="dash-panel">
+          <div id="overviewContent"></div>
+        </div>
+
+        <!-- Find Services -->
+        <div id="dash-services" class="dash-panel" style="display:none;">
+          <div class="search-bar mb-2">
+            <i class="fas fa-search"></i>
+            <input type="search" id="serviceSearch" placeholder="Search hospitals, colleges, banks…" aria-label="Search services">
+          </div>
+
+          <div class="category-filters" id="categoryFilters">
+            <button class="cat-btn active" data-cat="all">All</button>
+            <button class="cat-btn" data-cat="Healthcare">Healthcare</button>
+            <button class="cat-btn" data-cat="Education">Education</button>
+            <button class="cat-btn" data-cat="Banking">Banking</button>
+            <button class="cat-btn" data-cat="Government">Government</button>
+            <button class="cat-btn" data-cat="Food">Food</button>
+            <button class="cat-btn" data-cat="Personal Care">Personal Care</button>
+          </div>
+
+          <div id="serviceList" class="service-grid"></div>
+          <div id="serviceEmpty" class="empty-state" style="display:none;">
+            <i class="fas fa-search"></i>
+            <h3>No services found</h3>
+            <p>Try a different search term or category filter.</p>
+          </div>
+        </div>
+
+        <!-- My Queue -->
+        <div id="dash-myqueue" class="dash-panel" style="display:none;">
+          <div id="myQueueContent"></div>
+        </div>
+
+        <!-- History -->
+        <div id="dash-history" class="dash-panel" style="display:none;">
+          <div id="historyContent"></div>
+        </div>
+
+        <!-- Notifications -->
+        <div id="dash-notifications" class="dash-panel" style="display:none;">
+          <div id="notificationsContent"></div>
+        </div>
+
+        <!-- Profile -->
+        <div id="dash-profile" class="dash-panel" style="display:none;">
+          <div id="profileContent"></div>
+        </div>
+      </main>
+    </div>
+
+    <!-- Bottom nav (mobile) -->
+    <nav class="bottom-nav" aria-label="Mobile navigation">
+      <div class="bottom-nav-inner">
+        <a href="#" data-dash="overview" class="active"><i class="fas fa-th-large"></i> <span>Home</span></a>
+        <a href="#" data-dash="services"><i class="fas fa-search"></i> <span>Services</span></a>
+        <a href="#" data-dash="myqueue"><i class="fas fa-ticket-alt"></i> <span>Queue</span></a>
+        <a href="#" data-dash="notifications"><i class="fas fa-bell"></i> <span>Alerts</span></a>
+        <a href="#" data-dash="profile"><i class="fas fa-user"></i> <span>Profile</span></a>
+      </div>
+    </nav>
+  </div>
+
+  <!-- ==================== QUEUE TRACKER PAGE ==================== -->
+  <div id="page-queue" class="page-section">
+    <div class="app-layout">
+      <aside class="sidebar" aria-label="Queue navigation">
+        <div class="logo" data-nav="landing" style="cursor:pointer;">
+          <i class="fas fa-queue"></i> QueueLess
+        </div>
+        <ul class="sidebar-nav">
+          <li><a href="#" data-dash="overview"><i class="fas fa-th-large"></i> <span>Overview</span></a></li>
+          <li><a href="#" data-dash="services"><i class="fas fa-search"></i> <span>Find Services</span></a></li>
+          <li><a href="#" data-dash="myqueue" class="active"><i class="fas fa-ticket-alt"></i> <span>My Queue</span></a></li>
+          <li><a href="#" data-dash="history"><i class="fas fa-history"></i> <span>History</span></a></li>
+          <li><a href="#" data-dash="notifications"><i class="fas fa-bell"></i> <span>Notifications</span></a></li>
+          <li><a href="#" data-dash="profile"><i class="fas fa-user"></i> <span>Profile</span></a></li>
+        </ul>
+      </aside>
+
+      <main class="main-content">
+        <div class="topbar">
+          <h1>Live Queue</h1>
+          <div class="topbar-actions">
+            <button class="icon-btn" data-nav="landing" aria-label="Back to landing">
+              <i class="fas fa-home"></i>
+            </button>
+          </div>
+        </div>
+        <div id="queueTrackerContent"></div>
+      </main>
+    </div>
+
+    <nav class="bottom-nav" aria-label="Mobile navigation">
+      <div class="bottom-nav-inner">
+        <a href="#" data-dash="overview"><i class="fas fa-th-large"></i> <span>Home</span></a>
+        <a href="#" data-dash="services"><i class="fas fa-search"></i> <span>Services</span></a>
+        <a href="#" data-dash="myqueue" class="active"><i class="fas fa-ticket-alt"></i> <span>Queue</span></a>
+        <a href="#" data-dash="notifications"><i class="fas fa-bell"></i> <span>Alerts</span></a>
+        <a href="#" data-dash="profile"><i class="fas fa-user"></i> <span>Profile</span></a>
+      </div>
+    </nav>
+  </div>
+
+  <!-- ==================== ADMIN DASHBOARD ==================== -->
+  <div id="page-admin" class="page-section">
+    <div class="app-layout">
+      <aside class="sidebar" aria-label="Admin navigation">
+        <div class="logo" data-nav="landing" style="cursor:pointer;">
+          <i class="fas fa-queue"></i> QueueLess
+        </div>
+        <ul class="sidebar-nav">
+          <li><a href="#" data-admin="dashboard" class="active"><i class="fas fa-chart-pie"></i> <span>Dashboard</span></a></li>
+          <li><a href="#" data-admin="queue"><i class="fas fa-list-ol"></i> <span>Queue</span></a></li>
+          <li><a href="#" data-admin="services"><i class="fas fa-concierge-bell"></i> <span>Services</span></a></li>
+          <li><a href="#" data-admin="customers"><i class="fas fa-users"></i> <span>Customers</span></a></li>
+          <li><a href="#" data-admin="analytics"><i class="fas fa-chart-bar"></i> <span>Analytics</span></a></li>
+          <li><a href="#" data-admin="settings"><i class="fas fa-cog"></i> <span>Settings</span></a></li>
+        </ul>
+      </aside>
+
+      <main class="main-content">
+        <div class="topbar">
+          <h1 id="adminTitle">Dashboard</h1>
+          <div class="topbar-actions">
+            <button class="icon-btn" data-nav="landing" aria-label="Back to landing">
+              <i class="fas fa-home"></i>
+            </button>
+          </div>
+        </div>
+        <div id="adminContent"></div>
+      </main>
+    </div>
+
+    <nav class="bottom-nav" aria-label="Mobile navigation">
+      <div class="bottom-nav-inner">
+        <a href="#" data-admin="dashboard" class="active"><i class="fas fa-chart-pie"></i> <span>Dash</span></a>
+        <a href="#" data-admin="queue"><i class="fas fa-list-ol"></i> <span>Queue</span></a>
+        <a href="#" data-admin="services"><i class="fas fa-concierge-bell"></i> <span>Services</span></a>
+        <a href="#" data-admin="analytics"><i class="fas fa-chart-bar"></i> <span>Stats</span></a>
+        <a href="#" data-admin="settings"><i class="fas fa-cog"></i> <span>Settings</span></a>
+      </div>
+    </nav>
+  </div>
+
+  <!-- ==================== MODAL OVERLAY ==================== -->
+  <div class="modal-overlay" id="modalOverlay" role="dialog" aria-modal="true">
+    <div class="modal" id="modalContent">
+      <!-- Dynamic modal content -->
+    </div>
+  </div>
+
+  <!-- ==================== TOAST CONTAINER ==================== -->
+  <div class="toast-container" id="toastContainer"></div>
+
+  <!-- ==================== JAVASCRIPT ==================== -->
+  <script>
+    /* ============================================================
+       QueueLess — Frontend Prototype
+       All data is simulated. No backend. Uses localStorage.
+       ============================================================ */
+
+    // ---------- Global State ----------
+    const APP = {
+      currentPage: 'landing',
+      dashPanel: 'overview',
+      adminPanel: 'dashboard',
+      queueInterval: null,
+      currentUser: null,
+      activeQueue: null,
+      services: [],
+      queueData: [],
+      notifications: [],
+      queueHistory: [],
+      adminSettings: {
+        autoAdvance: true,
+        advanceInterval: 12,
+        counters: 3,
+        notificationsEnabled: true
+      },
+      joinedServiceId: null,
+      selectedCategory: 'all',
+      selectedStatus: 'all',
+      serviceSearchTerm: '',
+      userTokenCounter: 47 // for generating token numbers
+    };
+
+    // ---------- Storage Helpers ----------
+    const Storage = {
+      get(key, fallback = null) {
+        try {
+          const val = localStorage.getItem('queueless_' + key);
+          return val ? JSON.parse(val) : fallback;
+        } catch (e) { return fallback; }
+      },
+      set(key, value) {
+        try {
+          localStorage.setItem('queueless_' + key, JSON.stringify(value));
+        } catch (e) { /* ignore */ }
+      },
+      remove(key) {
+        localStorage.removeItem('queueless_' + key);
+      }
+    };
+
+    // ---------- Initialize Demo Data ----------
+    function initDemoData() {
+      // Services
+      if (!Storage.get('services')) {
+        const defaultServices = [
+          { id: 's1', name: 'General Consultation', category: 'Healthcare', avgTime: 8, counter: 2, status: 'Open', facility: 'CityCare Clinic', waiting: 14 },
+          { id: 's2', name: 'Dental Checkup', category: 'Healthcare', avgTime: 12, counter: 1, status: 'Open', facility: 'Smile Dental', waiting: 8 },
+          { id: 's3', name: 'Account Opening', category: 'Banking', avgTime: 15, counter: 3, status: 'Open', facility: 'National Bank', waiting: 22 },
+          { id: 's4', name: 'Document Verification', category: 'Government', avgTime: 6, counter: 1, status: 'Open', facility: 'City Hall', waiting: 19 },
+          { id: 's5', name: 'Course Registration', category: 'Education', avgTime: 10, counter: 4, status: 'Open', facility: 'State University', waiting: 11 },
+          { id: 's6', name: 'Haircut & Styling', category: 'Personal Care', avgTime: 20, counter: 2, status: 'Open', facility: 'Glow Salon', waiting: 5 },
+          { id: 's7', name: 'Food Order Pickup', category: 'Food', avgTime: 5, counter: 2, status: 'Open', facility: 'Campus Cafe', waiting: 7 },
+          { id: 's8', name: 'Passport Application', category: 'Government', avgTime: 18, counter: 1, status: 'Open', facility: 'Regional Passport Office', waiting: 31 }
+        ];
+        Storage.set('services', defaultServices);
+      }
+
+      // Queue Data (waiting list)
+      if (!Storage.get('queueData')) {
+        const tokens = [];
+        for (let i = 36; i <= 60; i++) {
+          tokens.push({
+            id: 'q' + i,
+            token: 'Q' + String(i).padStart(3, '0'),
+            customer: 'Customer ' + i,
+            serviceId: 's1',
+            status: i <= 35 ? 'Completed' : (i === 36 ? 'Serving' : 'Waiting'),
+            wait: Math.floor(Math.random() * 20) + 2,
+            timestamp: Date.now() - (60 - i) * 60000
+          });
+        }
+        Storage.set('queueData', tokens);
+      }
+
+      // Queue History
+      if (!Storage.get('queueHistory')) {
+        Storage.set('queueHistory', [
+          { token: 'Q030', service: 'General Consultation', completedAt: Date.now() - 3600000, waitTime: 15 },
+          { token: 'Q031', service: 'General Consultation', completedAt: Date.now() - 3000000, waitTime: 12 },
+          { token: 'Q032', service: 'General Consultation', completedAt: Date.now() - 2400000, waitTime: 18 },
+          { token: 'Q033', service: 'General Consultation', completedAt: Date.now() - 1800000, waitTime: 10 }
+        ]);
+      }
+
+      // Notifications
+      if (!Storage.get('notifications')) {
+        Storage.set('notifications', [
+          { id: 'n1', title: 'Welcome to QueueLess', message: 'Your digital queue companion.', time: Date.now() - 86400000, read: false, type: 'info' },
+          { id: 'n2', title: 'Queue moving faster', message: 'The queue is moving 20% faster than usual.', time: Date.now() - 7200000, read: false, type: 'success' }
+        ]);
+      }
+
+      // Admin settings
+      if (!Storage.get('adminSettings')) {
+        Storage.set('adminSettings', APP.adminSettings);
+      } else {
+        APP.adminSettings = Storage.get('adminSettings');
+      }
+
+      // Current user
+      if (!Storage.get('currentUser')) {
+        Storage.set('currentUser', { name: 'Alex Johnson', email: 'alex@example.com', phone: '+1 555-0100' });
+      }
+    }
+
+    // ---------- Load State ----------
+    function loadState() {
+      APP.currentUser = Storage.get('currentUser', { name: 'Alex Johnson', email: 'alex@example.com', phone: '+1 555-0100' });
+      APP.activeQueue = Storage.get('activeQueue', null);
+      APP.services = Storage.get('services', []);
+      APP.queueData = Storage.get('queueData', []);
+      APP.notifications = Storage.get('notifications', []);
+      APP.queueHistory = Storage.get('queueHistory', []);
+      APP.adminSettings = Storage.get('adminSettings', APP.adminSettings);
+    }
+
+    // ---------- Save State ----------
+    function saveState() {
+      Storage.set('activeQueue', APP.activeQueue);
+      Storage.set('services', APP.services);
+      Storage.set('queueData', APP.queueData);
+      Storage.set('notifications', APP.notifications);
+      Storage.set('queueHistory', APP.queueHistory);
+      Storage.set('adminSettings', APP.adminSettings);
+      Storage.set('currentUser', APP.currentUser);
+    }
+
+    // ---------- Navigation ----------
+    function navigateTo(page) {
+      // Hide all pages
+      document.querySelectorAll('.page-section').forEach(p => p.classList.remove('active'));
+      const target = document.getElementById('page-' + page);
+      if (target) target.classList.add('active');
+      APP.currentPage = page;
+
+      // Close mobile menu
+      document.getElementById('mobileMenu').classList.remove('active');
+
+      // Scroll to top
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+
+      // Page-specific init
+      if (page === 'dashboard') {
+        renderDashboard();
+      } else if (page === 'queue') {
+        renderQueueTracker();
+      } else if (page === 'admin') {
+        renderAdmin();
+      }
+
+      // Update nav active states
+      updateNavActive();
+    }
+
+    function updateNavActive() {
+      // Landing nav scroll links
+      document.querySelectorAll('.nav-links a').forEach(a => a.classList.remove('active'));
+      // Sidebar dash
+      document.querySelectorAll('[data-dash]').forEach(a => a.classList.remove('active'));
+      // Bottom nav
+      document.querySelectorAll('.bottom-nav a').forEach(a => a.classList.remove('active'));
+      // Admin sidebar
+      document.querySelectorAll('[data-admin]').forEach(a => a.classList.remove('active'));
+
+      if (APP.currentPage === 'dashboard' || APP.currentPage === 'queue') {
+        document.querySelectorAll('[data-dash="' + APP.dashPanel + '"]').forEach(a => a.classList.add('active'));
+      }
+      if (APP.currentPage === 'admin') {
+        document.querySelectorAll('[data-admin="' + APP.adminPanel + '"]').forEach(a => a.classList.add('active'));
+      }
+    }
+
+    // ---------- Toast ----------
+    function showToast(title, message, type = 'info', duration = 4000) {
+      const container = document.getElementById('toastContainer');
+      const toast = document.createElement('div');
+      toast.className = 'toast ' + type;
+      const icons = { info: 'fa-info-circle', success: 'fa-check-circle', warning: 'fa-exclamation-triangle', danger: 'fa-times-circle' };
+      toast.innerHTML = `
+        <i class="fas ${icons[type] || icons.info}"></i>
+        <div class="toast-content">
+          <div class="toast-title">${title}</div>
+          <div class="toast-msg">${message}</div>
+        </div>
+      `;
+      container.appendChild(toast);
+      setTimeout(() => {
+        toast.style.opacity = '0';
+        toast.style.transform = 'translateX(40px)';
+        toast.style.transition = 'all 0.3s ease';
+        setTimeout(() => toast.remove(), 300);
+      }, duration);
+    }
+
+    // ---------- Modal ----------
+    function openModal(html) {
+      const overlay = document.getElementById('modalOverlay');
+      document.getElementById('modalContent').innerHTML = html;
+      overlay.classList.add('active');
+      document.body.style.overflow = 'hidden';
+      // Focus trap
+      const focusable = document.getElementById('modalContent').querySelectorAll('button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])');
+      if (focusable.length) focusable[0].focus();
+    }
+
+    function closeModal() {
+      const overlay = document.getElementById('modalOverlay');
+      overlay.classList.remove('active');
+      document.body.style.overflow = '';
+    }
+
+    // Modal event listeners
+    document.getElementById('modalOverlay').addEventListener('click', (e) => {
+      if (e.target === e.currentTarget) closeModal();
+    });
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape') closeModal();
+    });
+
+    // ---------- Render Helpers ----------
+    function formatTime(ts) {
+      const d = new Date(ts);
+      return d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    }
+
+    function timeAgo(ts) {
+      const diff = Date.now() - ts;
+      const mins = Math.floor(diff / 60000);
+      if (mins < 1) return 'Just now';
+      if (mins < 60) return mins + 'm ago';
+      const hrs = Math.floor(mins / 60);
+      if (hrs < 24) return hrs + 'h ago';
+      return Math.floor(hrs / 24) + 'd ago';
+    }
+
+    function getServiceById(id) {
+      return APP.services.find(s => s.id === id) || { name: 'Unknown', facility: 'Unknown', avgTime: 10, counter: 1, waiting: 0 };
+    }
+
+    // ---------- Service Search & Filter ----------
+    function filterServices() {
+      let list = APP.services;
+      if (APP.selectedCategory !== 'all') {
+        list = list.filter(s => s.category === APP.selectedCategory);
+      }
+      if (APP.serviceSearchTerm) {
+        const term = APP.serviceSearchTerm.toLowerCase();
+        list = list.filter(s =>
+          s.name.toLowerCase().includes(term) ||
+          s.facility.toLowerCase().includes(term) ||
+          s.category.toLowerCase().includes(term)
+        );
+      }
+      return list;
+    }
+
+    // ---------- Join Queue ----------
+    function joinQueue(serviceId) {
+      const service = getServiceById(serviceId);
+      const nextTokenNum = APP.userTokenCounter + 1;
+      APP.userTokenCounter = nextTokenNum;
+      const tokenStr = 'Q' + String(nextTokenNum).padStart(3, '0');
+
+      // Count waiting ahead (including serving? no, only waiting)
+      const waitingTokens = APP.queueData.filter(q => q.status === 'Waiting' && q.serviceId === serviceId);
+      const servingTokens = APP.queueData.filter(q => q.status === 'Serving' && q.serviceId === serviceId);
+      const peopleAhead = waitingTokens.length + servingTokens.length;
+
+      const estimatedWait = Math.round(peopleAhead * (service.avgTime || 10));
+
+      APP.activeQueue = {
+        id: 'active_' + Date.now(),
+        token: tokenStr,
+        serviceId: serviceId,
+        serviceName: service.name,
+        facility: service.facility,
+        peopleAhead: peopleAhead,
+        estimatedWait: estimatedWait,
+        joinedAt: Date.now(),
+        position: peopleAhead + 1,
+        nowServing: servingTokens.length > 0 ? servingTokens[0].token : '—',
+        status: 'Waiting'
+      };
+
+      // Add to queue data
+      APP.queueData.push({
+        id: 'q_' + tokenStr,
+        token: tokenStr,
+        customer: APP.currentUser.name,
+        serviceId: serviceId,
+        status: 'Waiting',
+        wait: estimatedWait,
+        timestamp: Date.now()
+      });
+
+      saveState();
+      closeModal();
+      showToast('Token Confirmed!', 'Your token ' + tokenStr + ' has been issued.', 'success');
+
+      // Add notification
+      APP.notifications.unshift({
+        id: 'n_' + Date.now(),
+        title: 'Token ' + tokenStr + ' confirmed',
+        message: 'You are in the queue for ' + service.name + ' at ' + service.facility + '.',
+        time: Date.now(),
+        read: false,
+        type: 'success'
+      });
+      saveState();
+
+      // Navigate to queue page
+      APP.dashPanel = 'myqueue';
+      navigateTo('queue');
+    }
+
+    // ---------- Leave Queue ----------
+    function leaveQueue() {
+      if (!APP.activeQueue) return;
+      const token = APP.activeQueue.token;
+      APP.activeQueue = null;
+      // Remove from queueData
+      APP.queueData = APP.queueData.filter(q => q.token !== token);
+      saveState();
+      closeModal();
+      showToast('Left Queue', 'You have left the queue. Token ' + token + ' removed.', 'warning');
+      APP.dashPanel = 'overview';
+      navigateTo('dashboard');
+    }
+
+    // ---------- Render Queue Tracker ----------
+    function renderQueueTracker() {
+      const container = document.getElementById('queueTrackerContent');
+      if (!container) return;
+
+      if (!APP.activeQueue) {
+        container.innerHTML = `
+          <div class="empty-state">
+            <i class="fas fa-ticket-alt"></i>
+            <h3>You're not in a queue yet.</h3>
+            <p>Find a nearby service and take your digital token.</p>
+            <button class="btn btn-primary" data-dash="services">Find a Service</button>
+          </div>
+        `;
+        container.querySelectorAll('[data-dash]').forEach(el => {
+          el.addEventListener('click', () => { APP.dashPanel = 'services'; navigateTo('dashboard'); });
+        });
+        return;
+      }
+
+      const aq = APP.activeQueue;
+      const service = getServiceById(aq.serviceId);
+      const total = aq.peopleAhead + 1;
+      const progress = Math.max(0, Math.min(100, ((total - aq.peopleAhead) / total) * 100));
+
+      // Timeline: generate tokens around active
+      const timelineTokens = [];
+      const currentNum = parseInt(aq.token.replace('Q', ''));
+      for (let i = currentNum - 3; i <= currentNum + 3; i++) {
+        if (i < 30) continue;
+        const t = 'Q' + String(i).padStart(3, '0');
+        let status = 'waiting';
+        if (i < currentNum) status = 'completed';
+        else if (i === currentNum) status = 'mine';
+        else if (i === currentNum + 1) status = 'waiting';
+        timelineTokens.push({ token: t, status });
+      }
+
+      container.innerHTML = `
+        <div class="queue-hero">
+          <div class="stat-card">
+            <div class="label">Your Token</div>
+            <div class="value" style="color:var(--brand-primary);">${aq.token}</div>
+          </div>
+          <div class="stat-card">
+            <div class="label">Now Serving</div>
+            <div class="value" id="nowServing">${aq.nowServing}</div>
+          </div>
+          <div class="stat-card">
+            <div class="label">Position</div>
+            <div class="value" id="positionVal">${aq.position}</div>
+          </div>
+          <div class="stat-card">
+            <div class="label">People Ahead</div>
+            <div class="value" id="peopleAheadVal">${aq.peopleAhead}</div>
+          </div>
+          <div class="stat-card">
+            <div class="label">Est. Wait</div>
+            <div class="value" id="waitVal">${aq.estimatedWait} min</div>
+          </div>
+        </div>
+
+        <div class="progress-container">
+          <div class="flex-between">
+            <span class="text-sm text-muted">Queue Progress</span>
+            <span class="badge badge-primary" id="progressPercent">${Math.round(progress)}%</span>
+          </div>
+          <div class="progress-track">
+            <div class="progress-fill" id="progressFill" style="width:${progress}%;"></div>
+          </div>
+        </div>
+
+        <div class="card mb-2">
+          <h3 style="margin-bottom:1rem;">Queue Timeline</h3>
+          <div class="timeline" id="queueTimeline">
+            ${timelineTokens.map(t => `
+              <div class="timeline-item">
+                <div class="dot ${t.status === 'mine' ? 'mine' : t.status === 'serving' ? 'serving' : t.status === 'completed' ? 'completed' : 'waiting'}"></div>
+                <strong>${t.token}</strong>
+                <span>${t.status === 'mine' ? 'Your Token' : t.status === 'serving' ? 'Now Serving' : t.status === 'completed' ? 'Completed' : 'Waiting'}</span>
+              </div>
+            `).join('')}
+          </div>
+        </div>
+
+        <div class="flex gap-2 flex-wrap">
+          <button class="btn btn-primary" id="refreshQueueBtn"><i class="fas fa-sync-alt"></i> Refresh Status</button>
+          <button class="btn btn-danger" id="leaveQueueBtn"><i class="fas fa-sign-out-alt"></i> Leave Queue</button>
+        </div>
+
+        <p class="text-sm text-muted mt-2"><i class="fas fa-info-circle"></i> Live updates every 10–15 seconds. Demo mode.</p>
+      `;
+
+      // Event listeners
+      document.getElementById('refreshQueueBtn')?.addEventListener('click', () => {
+        advanceQueue(true);
+      });
+      document.getElementById('leaveQueueBtn')?.addEventListener('click', () => {
+        openModal(`
+          <div class="modal-header">
+            <h2>Leave Queue?</h2>
+            <button class="modal-close" onclick="closeModal()" aria-label="Close">&times;</button>
+          </div>
+          <p class="text-muted">Your token <strong>${aq.token}</strong> will be removed. You'll lose your place in line.</p>
+          <div class="modal-actions">
+            <button class="btn btn-outline" onclick="closeModal()">Cancel</button>
+            <button class="btn btn-danger" onclick="leaveQueue()">Leave Queue</button>
+          </div>
+        `);
+      });
+    }
+
+    // ---------- Simulated Queue Advance ----------
+    function advanceQueue(manual = false) {
+      if (!APP.activeQueue) return;
+
+      const aq = APP.activeQueue;
+      const serviceId = aq.serviceId;
+
+      // Find current serving for this service
+      const serving = APP.queueData.find(q => q.status === 'Serving' && q.serviceId === serviceId);
+      const waiting = APP.queueData.filter(q => q.status === 'Waiting' && q.serviceId === serviceId);
+
+      if (serving) {
+        // Complete current serving
+        serving.status = 'Completed';
+        // Add to history
+        APP.queueHistory.unshift({
+          token: serving.token,
+          service: getServiceById(serviceId).name,
+          completedAt: Date.now(),
+          waitTime: Math.round(Math.random() * 10) + 5
+        });
+
+        if (waiting.length > 0) {
+          // Next waiting becomes serving
+          const next = waiting[0];
+          next.status = 'Serving';
+          aq.nowServing = next.token;
+        } else {
+          aq.nowServing = '—';
+        }
+      } else if (waiting.length > 0) {
+        // No serving, promote first waiting
+        waiting[0].status = 'Serving';
+        aq.nowServing = waiting[0].token;
+      }
+
+      // Recalculate active queue position
+      const remainingWaiting = APP.queueData.filter(q => q.status === 'Waiting' && q.serviceId === serviceId);
+      const servingNow = APP.queueData.filter(q => q.status === 'Serving' && q.serviceId === serviceId);
+      const peopleAhead = remainingWaiting.length + (servingNow.length > 0 ? 1 : 0);
+      aq.peopleAhead = Math.max(0, peopleAhead - 1);
+      aq.position = aq.peopleAhead + 1;
+      const service = getServiceById(serviceId);
+      aq.estimatedWait = Math.round(aq.peopleAhead * (service.avgTime || 10));
+
+      // Check if user's token is now serving
+      const userToken = APP.queueData.find(q => q.token === aq.token);
+      if (userToken && userToken.status === 'Serving') {
+        aq.status = 'Serving';
+        showToast('NOW SERVING', 'Token ' + aq.token + '. Please proceed to Counter ' + service.counter + '.', 'success', 8000);
+        APP.notifications.unshift({
+          id: 'n_' + Date.now(),
+          title: 'NOW SERVING',
+          message: 'Token ' + aq.token + '. Please proceed to Counter ' + service.counter + '.',
+          time: Date.now(),
+          read: false,
+          type: 'success'
+        });
+        saveState();
+        renderQueueTracker();
+        return;
+      }
+
+      // Position-based notifications
+      const pos = aq.peopleAhead;
+      if (pos === 5) {
+        showToast('Queue moving!', 'You are now 5th in line.', 'info');
+        APP.notifications.unshift({ id: 'n_' + Date.now(), title: 'Queue moving!', message: 'You are now 5th in line.', time: Date.now(), read: false, type: 'info' });
+      } else if (pos === 3) {
+        showToast('Almost your turn', 'Only 3 people ahead of you.', 'warning');
+        APP.notifications.unshift({ id: 'n_' + Date.now(), title: 'Almost your turn', message: 'Only 3 people ahead of you.', time: Date.now(), read: false, type: 'warning' });
+      } else if (pos === 1) {
+        showToast('You\'re next!', 'Only 1 person ahead of you.', 'warning');
+        APP.notifications.unshift({ id: 'n_' + Date.now(), title: 'You\'re next!', message: 'Only 1 person ahead of you.', time: Date.now(), read: false, type: 'warning' });
+      }
+
+      saveState();
+      renderQueueTracker();
+      if (manual) showToast('Refreshed', 'Queue status updated.', 'info', 2000);
+    }
+
+    // Start auto-advance
+    function startAutoAdvance() {
+      if (APP.queueInterval) clearInterval(APP.queueInterval);
+      const interval = (APP.adminSettings.advanceInterval || 12) * 1000;
+      APP.queueInterval = setInterval(() => {
+        if (APP.activeQueue && APP.adminSettings.autoAdvance) {
+          advanceQueue(false);
+        }
+      }, interval);
+    }
+
+    // ---------- Render Dashboard ----------
+    function renderDashboard() {
+      renderOverview();
+      renderServices();
+      renderMyQueue();
+      renderHistory();
+      renderNotifications();
+      renderProfile();
+
+      // Show active panel
+      document.querySelectorAll('.dash-panel').forEach(p => p.style.display = 'none');
+      const panel = document.getElementById('dash-' + APP.dashPanel);
+      if (panel) panel.style.display = 'block';
+
+      // Update title
+      const titles = { overview: 'Overview', services: 'Find Services', myqueue: 'My Queue', history: 'History', notifications: 'Notifications', profile: 'Profile' };
+      document.getElementById('dashTitle').textContent = titles[APP.dashPanel] || 'Dashboard';
+
+      // Update active nav
+      updateNavActive();
+    }
+
+    function renderOverview() {
+      const el = document.getElementById('overviewContent');
+      if (!el) return;
+      const aq = APP.activeQueue;
+      const notifCount = APP.notifications.filter(n => !n.read).length;
+
+      el.innerHTML = `
+        <div class="stat-cards">
+          <div class="stat-card">
+            <div class="label">Active Queue</div>
+            <div class="value">${aq ? aq.token : '—'}</div>
+            <div class="sub">${aq ? aq.facility : 'No active queue'}</div>
+          </div>
+          <div class="stat-card">
+            <div class="label">Position</div>
+            <div class="value">${aq ? aq.position : '—'}</div>
+            <div class="sub">${aq ? 'in line' : '—'}</div>
+          </div>
+          <div class="stat-card">
+            <div class="label">Estimated Wait</div>
+            <div class="value">${aq ? aq.estimatedWait + ' min' : '—'}</div>
+            <div class="sub">${aq ? 'approx.' : '—'}</div>
+          </div>
+          <div class="stat-card">
+            <div class="label">People Ahead</div>
+            <div class="value">${aq ? aq.peopleAhead : '—'}</div>
+            <div class="sub">${aq ? 'ahead of you' : '—'}</div>
+          </div>
+        </div>
+
+        ${aq ? `
+          <div class="card card-hover" style="cursor:pointer;" data-dash="myqueue">
+            <div class="flex-between mb-2">
+              <h3><i class="fas fa-ticket-alt" style="color:var(--brand-primary);"></i> Active Token</h3>
+              <span class="badge badge-primary">Live</span>
+            </div>
+            <div style="font-size:2rem;font-weight:700;color:var(--brand-primary);">${aq.token}</div>
+            <div class="text-muted">${aq.serviceName} · ${aq.facility}</div>
+            <div class="flex gap-2 mt-2">
+              <span class="badge badge-success">${aq.status}</span>
+              <span class="badge badge-primary">${aq.estimatedWait} min wait</span>
+            </div>
+          </div>
+        ` : `
+          <div class="empty-state">
+            <i class="fas fa-ticket-alt"></i>
+            <h3>You're not in a queue yet.</h3>
+            <p>Find a nearby service and take your digital token.</p>
+            <button class="btn btn-primary" data-dash="services">Find a Service</button>
+          </div>
+        `}
+      `;
+
+      el.querySelectorAll('[data-dash]').forEach(b => {
+        b.addEventListener('click', () => { APP.dashPanel = b.dataset.dash; renderDashboard(); });
+      });
+    }
+
+    function renderServices() {
+      const el = document.getElementById('serviceList');
+      if (!el) return;
+      const list = filterServices();
+      const empty = document.getElementById('serviceEmpty');
+
+      if (list.length === 0) {
+        el.innerHTML = '';
+        empty.style.display = 'block';
+        return;
+      }
+      empty.style.display = 'none';
+
+      el.innerHTML = list.map(s => `
+        <div class="service-card">
+          <div class="flex-between">
+            <h3>${s.name}</h3>
+            <span class="badge ${s.status === 'Open' ? 'badge-success' : 'badge-danger'}">${s.status}</span>
+          </div>
+          <div class="text-muted text-sm">${s.facility} · ${s.category}</div>
+          <div class="service-meta">
+            <span>Waiting: <strong>${s.waiting || 0}</strong></span>
+            <span>Est: <strong>${s.waiting * (s.avgTime || 10)} min</strong></span>
+          </div>
+          <div class="service-meta">
+            <span>Avg: <strong>${s.avgTime || 10} min</strong></span>
+            <span>Counter: <strong>${s.counter || 1}</strong></span>
+          </div>
+          <button class="btn btn-primary btn-block" data-join="${s.id}">
+            <i class="fas fa-plus-circle"></i> Join Queue
+          </button>
+        </div>
+      `).join('');
+
+      el.querySelectorAll('[data-join]').forEach(btn => {
+        btn.addEventListener('click', () => {
+          const sid = btn.dataset.join;
+          const svc = getServiceById(sid);
+          const waiting = APP.queueData.filter(q => q.status === 'Waiting' && q.serviceId === sid).length;
+          const serving = APP.queueData.filter(q => q.status === 'Serving' && q.serviceId === sid).length;
+          const ahead = waiting + serving;
+          const est = Math.round(ahead * (svc.avgTime || 10));
+          const nextToken = 'Q' + String(APP.userTokenCounter + 1).padStart(3, '0');
+
+          openModal(`
+            <div class="modal-header">
+              <h2>Join Queue</h2>
+              <button class="modal-close" onclick="closeModal()" aria-label="Close">&times;</button>
+            </div>
+            <div class="modal-detail">
+              <span class="label">Service</span>
+              <span class="value">${svc.name}</span>
+            </div>
+            <div class="modal-detail">
+              <span class="label">Facility</span>
+              <span class="value">${svc.facility}</span>
+            </div>
+            <div class="modal-detail">
+              <span class="label">Current token</span>
+              <span class="value">${serving > 0 ? APP.queueData.find(q => q.status === 'Serving' && q.serviceId === sid)?.token || '—' : '—'}</span>
+            </div>
+            <div class="modal-detail">
+              <span class="label">Your token</span>
+              <span class="value" style="color:var(--brand-primary);font-weight:700;">${nextToken}</span>
+            </div>
+            <div class="modal-detail">
+              <span class="label">People ahead</span>
+              <span class="value">${ahead}</span>
+            </div>
+            <div class="modal-detail">
+              <span class="label">Estimated waiting time</span>
+              <span class="value">${est} minutes</span>
+            </div>
+            <div class="modal-actions">
+              <button class="btn btn-outline" onclick="closeModal()">Cancel</button>
+              <button class="btn btn-primary" onclick="joinQueue('${sid}')">Confirm &amp; Get Token</button>
+            </div>
+          `);
+        });
+      });
+    }
+
+    function renderMyQueue() {
+      const el = document.getElementById('myQueueContent');
+      if (!el) return;
+      if (!APP.activeQueue) {
+        el.innerHTML = `
+          <div class="empty-state">
+            <i class="fas fa-ticket-alt"></i>
+            <h3>No active queue</h3>
+            <p>You haven't joined any queue yet.</p>
+            <button class="btn btn-primary" data-dash="services">Find a Service</button>
+          </div>
+        `;
+        el.querySelectorAll('[data-dash]').forEach(b => b.addEventListener('click', () => { APP.dashPanel = 'services'; renderDashboard(); }));
+        return;
+      }
+      const aq = APP.activeQueue;
+      el.innerHTML = `
+        <div class="card mb-2">
+          <div class="flex-between mb-2">
+            <h3>Active Token</h3>
+            <span class="badge badge-success">${aq.status}</span>
+          </div>
+          <div style="font-size:2.5rem;font-weight:700;color:var(--brand-primary);">${aq.token}</div>
+          <div class="text-muted">${aq.serviceName} · ${aq.facility}</div>
+          <div class="stat-cards mt-2" style="grid-template-columns:1fr 1fr 1fr;">
+            <div class="stat-card" style="padding:1rem;">
+              <div class="label">Position</div>
+              <div class="value">${aq.position}</div>
+            </div>
+            <div class="stat-card" style="padding:1rem;">
+              <div class="label">Ahead</div>
+              <div class="value">${aq.peopleAhead}</div>
+            </div>
+            <div class="stat-card" style="padding:1rem;">
+              <div class="label">Est. Wait</div>
+              <div class="value">${aq.estimatedWait} min</div>
+            </div>
+          </div>
+        </div>
+        <button class="btn btn-primary btn-block" data-dash="myqueue" id="goToTracker">
+          <i class="fas fa-external-link-alt"></i> Open Live Tracker
+        </button>
+      `;
+      document.getElementById('goToTracker')?.addEventListener('click', () => navigateTo('queue'));
+    }
+
+    function renderHistory() {
+      const el = document.getElementById('historyContent');
+      if (!el) return;
+      const hist = APP.queueHistory;
+      if (hist.length === 0) {
+        el.innerHTML = `
+          <div class="empty-state">
+            <i class="fas fa-history"></i>
+            <h3>No history yet</h3>
+            <p>Your completed queues will appear here.</p>
+          </div>
+        `;
+        return;
+      }
+      el.innerHTML = `
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Token</th><th>Service</th><th>Completed</th><th>Wait Time</th></tr></thead>
+            <tbody>
+              ${hist.map(h => `
+                <tr>
+                  <td data-label="Token"><strong>${h.token}</strong></td>
+                  <td data-label="Service">${h.service}</td>
+                  <td data-label="Completed">${timeAgo(h.completedAt)}</td>
+                  <td data-label="Wait Time">${h.waitTime} min</td>
+                </tr>
+              `).join('')}
+            </tbody>
+          </table>
+        </div>
+      `;
+    }
+
+    function renderNotifications() {
+      const el = document.getElementById('notificationsContent');
+      if (!el) return;
+      const notifs = APP.notifications;
+      if (notifs.length === 0) {
+        el.innerHTML = `
+          <div class="empty-state">
+            <i class="fas fa-bell-slash"></i>
+            <h3>No notifications</h3>
+            <p>You're all caught up!</p>
+          </div>
+        `;
+        return;
+      }
+      el.innerHTML = `<div class="notif-list">${notifs.map(n => `
+        <div class="notif-item">
+          <div class="notif-icon ${n.type}"><i class="fas ${n.type === 'success' ? 'fa-check-circle' : n.type === 'warning' ? 'fa-exclamation-triangle' : 'fa-info-circle'}"></i></div>
+          <div class="notif-content">
+            <h4>${n.title}</h4>
+            <p>${n.message}</p>
+            <div class="notif-time">${timeAgo(n.time)}</div>
+          </div>
+        </div>
+      `).join('')}</div>`;
+    }
+
+    function renderProfile() {
+      const el = document.getElementById('profileContent');
+      if (!el) return;
+      const u = APP.currentUser;
+      el.innerHTML = `
+        <div class="profile-header">
+          <div class="avatar">${u.name.charAt(0)}</div>
+          <div>
+            <h2>${u.name}</h2>
+            <p class="text-muted">${u.email} · ${u.phone}</p>
+          </div>
+        </div>
+        <div class="card">
+          <h3 class="mb-2">Preferences</h3>
+          <div class="flex-between" style="padding:0.75rem 0;border-bottom:1px solid var(--neutral-100);">
+            <span>Push notifications</span>
+            <label class="toggle-switch"><input type="checkbox" checked><span class="toggle-slider"></span></label>
+          </div>
+          <div class="flex-between" style="padding:0.75rem 0;border-bottom:1px solid var(--neutral-100);">
+            <span>Email updates</span>
+            <label class="toggle-switch"><input type="checkbox"><span class="toggle-slider"></span></label>
+          </div>
+          <div class="flex-between" style="padding:0.75rem 0;">
+            <span>SMS alerts</span>
+            <label class="toggle-switch"><input type="checkbox" checked><span class="toggle-slider"></span></label>
+          </div>
+        </div>
+        <button class="btn btn-outline mt-2" data-nav="landing"><i class="fas fa-sign-out-alt"></i> Sign Out</button>
+      `;
+      el.querySelectorAll('[data-nav]').forEach(b => b.addEventListener('click', () => navigateTo(b.dataset.nav)));
+    }
+
+    // ---------- Admin Render ----------
+    function renderAdmin() {
+      const el = document.getElementById('adminContent');
+      if (!el) return;
+
+      // Show active panel
+      const panels = document.querySelectorAll('.admin-panel');
+      // We'll re-render entirely based on APP.adminPanel
+      const titles = { dashboard: 'Dashboard', queue: 'Queue', services: 'Services', customers: 'Customers', analytics: 'Analytics', settings: 'Settings' };
+      document.getElementById('adminTitle').textContent = titles[APP.adminPanel] || 'Admin';
+
+      if (APP.adminPanel === 'dashboard') renderAdminDashboard(el);
+      else if (APP.adminPanel === 'queue') renderAdminQueue(el);
+      else if (APP.adminPanel === 'services') renderAdminServices(el);
+      else if (APP.adminPanel === 'customers') renderAdminCustomers(el);
+      else if (APP.adminPanel === 'analytics') renderAdminAnalytics(el);
+      else if (APP.adminPanel === 'settings') renderAdminSettings(el);
+
+      updateNavActive();
+    }
+
+    function renderAdminDashboard(el) {
+      const waiting = APP.queueData.filter(q => q.status === 'Waiting');
+      const serving = APP.queueData.find(q => q.status === 'Serving');
+      const completed = APP.queueData.filter(q => q.status === 'Completed').length + APP.queueHistory.length;
+      const avgWait = Math.round(APP.queueData.reduce((a, q) => a + (q.wait || 10), 0) / Math.max(1, APP.queueData.length));
+
+      el.innerHTML = `
+        <div class="stat-cards">
+          <div class="stat-card"><div class="label">People Waiting</div><div class="value">${waiting.length}</div></div>
+          <div class="stat-card"><div class="label">Currently Serving</div><div class="value" style="color:var(--brand-primary);">${serving ? serving.token : '—'}</div></div>
+          <div class="stat-card"><div class="label">Completed Today</div><div class="value">${completed}</div></div>
+          <div class="stat-card"><div class="label">Average Wait</div><div class="value">${avgWait} min</div></div>
+        </div>
+
+        <div class="admin-controls">
+          <button class="btn btn-primary" id="callNextBtn"><i class="fas fa-bullhorn"></i> CALL NEXT</button>
+          <button class="btn btn-outline" id="skipBtn"><i class="fas fa-forward"></i> SKIP</button>
+          <button class="btn btn-success" id="completeBtn"><i class="fas fa-check"></i> COMPLETE</button>
+        </div>
+
+        <h3 class="mb-2">Live Queue</h3>
+        ${renderQueueTable(waiting.slice(0, 10))}
+      `;
+
+      document.getElementById('callNextBtn')?.addEventListener('click', () => {
+        advanceQueue();
+        showToast('Called Next', 'Next customer is now being served.', 'success');
+        renderAdmin();
+      });
+      document.getElementById('skipBtn')?.addEventListener('click', () => {
+        const current = APP.queueData.find(q => q.status === 'Serving');
+        if (current) {
+          current.status = 'Skipped';
+          const next = APP.queueData.find(q => q.status === 'Waiting');
+          if (next) next.status = 'Serving';
+          saveState();
+          showToast('Skipped', 'Token ' + current.token + ' skipped.', 'warning');
+          renderAdmin();
+        }
+      });
+      document.getElementById('completeBtn')?.addEventListener('click', () => {
+        const current = APP.queueData.find(q => q.status === 'Serving');
+        if (current) {
+          current.status = 'Completed';
+          APP.queueHistory.unshift({ token: current.token, service: getServiceById(current.serviceId).name, completedAt: Date.now(), waitTime: current.wait });
+          const next = APP.queueData.find(q => q.status === 'Waiting');
+          if (next) next.status = 'Serving';
+          saveState();
+          showToast('Completed', 'Token ' + current.token + ' completed.', 'success');
+          renderAdmin();
+        }
+      });
+    }
+
+    function renderQueueTable(list) {
+      if (!list || list.length === 0) {
+        return `<div class="empty-state"><i class="fas fa-inbox"></i><h3>Queue is empty</h3><p>No customers waiting.</p></div>`;
+      }
+      return `
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Token</th><th>Customer</th><th>Service</th><th>Status</th><th>Wait</th><th>Action</th></tr></thead>
+            <tbody>
+              ${list.map(q => `
+                <tr>
+                  <td data-label="Token"><strong>${q.token}</strong></td>
+                  <td data-label="Customer">${q.customer || 'Customer'}</td>
+                  <td data-label="Service">${getServiceById(q.serviceId).name}</td>
+                  <td data-label="Status"><span class="badge ${q.status === 'Serving' ? 'badge-success' : q.status === 'Waiting' ? 'badge-warning' : 'badge-primary'}">${q.status}</span></td>
+                  <td data-label="Wait">${q.wait || 0} min</td>
+                  <td data-label="Action">
+                    <div class="table-actions">
+                      <button class="btn btn-sm btn-outline" data-call="${q.id}">Call</button>
+                      <button class="btn btn-sm btn-outline" data-skip="${q.id}">Skip</button>
+                      <button class="btn btn-sm btn-success" data-complete="${q.id}">✓</button>
+                    </div>
+                  </td>
+                </tr>
+              `).join('')}
+            </tbody>
+          </table>
+        </div>
+      `;
+    }
+
+    function renderAdminQueue(el) {
+      const all = APP.queueData.filter(q => q.status !== 'Completed' && q.status !== 'Skipped');
+      el.innerHTML = `
+        <div class="category-filters mb-2">
+          <button class="cat-btn active" data-status="all">All</button>
+          <button class="cat-btn" data-status="Waiting">Waiting</button>
+          <button class="cat-btn" data-status="Serving">Serving</button>
+          <button class="cat-btn" data-status="Completed">Completed</button>
+        </div>
+        <div id="adminQueueTable">${renderQueueTable(all)}</div>
+      `;
+
+      el.querySelectorAll('[data-status]').forEach(btn => {
+        btn.addEventListener('click', () => {
+          el.querySelectorAll('[data-status]').forEach(b => b.classList.remove('active'));
+          btn.classList.add('active');
+          const status = btn.dataset.status;
+          let filtered = APP.queueData;
+          if (status !== 'all') filtered = filtered.filter(q => q.status === status);
+          document.getElementById('adminQueueTable').innerHTML = renderQueueTable(filtered);
+          bindQueueActions(el);
+        });
+      });
+      bindQueueActions(el);
+    }
+
+    function bindQueueActions(container) {
+      container.querySelectorAll('[data-call]').forEach(b => b.addEventListener('click', () => {
+        const id = b.dataset.call;
+        const q = APP.queueData.find(x => x.id === id);
+        if (q) { q.status = 'Serving'; saveState(); renderAdmin(); showToast('Called', q.token + ' is now serving.', 'success'); }
+      }));
+      container.querySelectorAll('[data-skip]').forEach(b => b.addEventListener('click', () => {
+        const id = b.dataset.skip;
+        const q = APP.queueData.find(x => x.id === id);
+        if (q) { q.status = 'Skipped'; saveState(); renderAdmin(); showToast('Skipped', q.token + ' skipped.', 'warning'); }
+      }));
+      container.querySelectorAll('[data-complete]').forEach(b => b.addEventListener('click', () => {
+        const id = b.dataset.complete;
+        const q = APP.queueData.find(x => x.id === id);
+        if (q) { q.status = 'Completed'; APP.queueHistory.unshift({ token: q.token, service: getServiceById(q.serviceId).name, completedAt: Date.now(), waitTime: q.wait }); saveState(); renderAdmin(); showToast('Completed', q.token + ' completed.', 'success'); }
+      }));
+    }
+
+    function renderAdminServices(el) {
+      el.innerHTML = `
+        <div class="flex-between mb-2 flex-wrap gap-1">
+          <h3>Manage Services</h3>
+          <button class="btn btn-primary btn-sm" id="addServiceBtn"><i class="fas fa-plus"></i> Add Service</button>
+        </div>
+        <div class="service-grid" id="adminServiceGrid">
+          ${APP.services.map(s => `
+            <div class="service-card">
+              <div class="flex-between">
+                <h3>${s.name}</h3>
+                <span class="badge ${s.status === 'Open' ? 'badge-success' : 'badge-danger'}">${s.status}</span>
+              </div>
+              <div class="text-muted text-sm">${s.facility} · ${s.category}</div>
+              <div class="service-meta"><span>Avg: <strong>${s.avgTime} min</strong></span><span>Counter: <strong>${s.counter}</strong></span></div>
+              <div class="flex gap-1">
+                <button class="btn btn-sm btn-outline" data-edit="${s.id}"><i class="fas fa-edit"></i> Edit</button>
+                <button class="btn btn-sm btn-danger" data-delete="${s.id}"><i class="fas fa-trash"></i></button>
+              </div>
+            </div>
+          `).join('')}
+        </div>
+      `;
+
+      document.getElementById('addServiceBtn')?.addEventListener('click', () => openServiceForm());
+      el.querySelectorAll('[data-edit]').forEach(b => b.addEventListener('click', () => openServiceForm(b.dataset.edit)));
+      el.querySelectorAll('[data-delete]').forEach(b => b.addEventListener('click', () => {
+        const id = b.dataset.delete;
+        openModal(`
+          <div class="modal-header"><h2>Delete Service?</h2><button class="modal-close" onclick="closeModal()">&times;</button></div>
+          <p class="text-muted">This will permanently remove the service.</p>
+          <div class="modal-actions">
+            <button class="btn btn-outline" onclick="closeModal()">Cancel</button>
+            <button class="btn btn-danger" onclick="deleteService('${id}')">Delete</button>
+          </div>
+        `);
+      }));
+    }
+
+    function openServiceForm(editId) {
+      const s = editId ? APP.services.find(x => x.id === editId) : null;
+      openModal(`
+        <div class="modal-header"><h2>${s ? 'Edit Service' : 'Add Service'}</h2><button class="modal-close" onclick="closeModal()">&times;</button></div>
+        <div class="form-group"><label>Service Name</label><input id="svcName" value="${s ? s.name : ''}" placeholder="e.g. General Consultation"></div>
+        <div class="form-group"><label>Category</label><select id="svcCategory">${['Healthcare','Education','Banking','Government','Food','Personal Care'].map(c => `<option ${s && s.category === c ? 'selected' : ''}>${c}</option>`).join('')}</select></div>
+        <div class="form-group"><label>Average Service Time (min)</label><input id="svcTime" type="number" value="${s ? s.avgTime : 10}" min="1"></div>
+        <div class="form-group"><label>Counter Number</label><input id="svcCounter" type="number" value="${s ? s.counter : 1}" min="1"></div>
+        <div class="form-group"><label>Status</label><select id="svcStatus"><option ${s && s.status === 'Open' ? 'selected' : ''}>Open</option><option ${s && s.status === 'Closed' ? 'selected' : ''}>Closed</option></select></div>
+        <div class="modal-actions">
+          <button class="btn btn-outline" onclick="closeModal()">Cancel</button>
+          <button class="btn btn-primary" onclick="saveService(${editId ? `'${editId}'` : 'null'})">Save</button>
+        </div>
+      `);
+    }
+
+    function saveService(editId) {
+      const name = document.getElementById('svcName').value.trim();
+      if (!name) { showToast('Error', 'Service name is required.', 'danger'); return; }
+      const category = document.getElementById('svcCategory').value;
+      const avgTime = parseInt(document.getElementById('svcTime').value) || 10;
+      const counter = parseInt(document.getElementById('svcCounter').value) || 1;
+      const status = document.getElementById('svcStatus').value;
+
+      if (editId) {
+        const s = APP.services.find(x => x.id === editId);
+        if (s) { s.name = name; s.category = category; s.avgTime = avgTime; s.counter = counter; s.status = status; }
+      } else {
+        APP.services.push({ id: 's' + Date.now(), name, category, avgTime, counter, status, facility: 'QueueLess Center', waiting: 0 });
+      }
+      saveState();
+      closeModal();
+      renderAdmin();
+      showToast('Saved', 'Service saved successfully.', 'success');
+    }
+
+    function deleteService(id) {
+      APP.services = APP.services.filter(s => s.id !== id);
+      saveState();
+      closeModal();
+      renderAdmin();
+      showToast('Deleted', 'Service removed.', 'warning');
+    }
+
+    function renderAdminCustomers(el) {
+      const customers = APP.queueData.slice(0, 20);
+      el.innerHTML = `
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Token</th><th>Customer</th><th>Service</th><th>Status</th></tr></thead>
+            <tbody>
+              ${customers.map(c => `
+                <tr>
+                  <td data-label="Token"><strong>${c.token}</strong></td>
+                  <td data-label="Customer">${c.customer || 'Customer'}</td>
+                  <td data-label="Service">${getServiceById(c.serviceId).name}</td>
+                  <td data-label="Status"><span class="badge ${c.status === 'Serving' ? 'badge-success' : c.status === 'Waiting' ? 'badge-warning' : 'badge-primary'}">${c.status}</span></td>
+                </tr>
+              `).join('')}
+            </tbody>
+          </table>
+        </div>
+      `;
+    }
+
+    function renderAdminAnalytics(el) {
+      const hours = ['9a', '10a', '11a', '12p', '1p', '2p', '3p', '4p', '5p'];
+      const data = [12, 19, 28, 35, 22, 18, 25, 30, 15];
+      const max = Math.max(...data);
+      el.innerHTML = `
+        <div class="stat-cards">
+          <div class="stat-card"><div class="label">Total Customers Today</div><div class="value">${APP.queueData.length + APP.queueHistory.length}</div></div>
+          <div class="stat-card"><div class="label">Completed Queues</div><div class="value">${APP.queueHistory.length}</div></div>
+          <div class="stat-card"><div class="label">Avg Waiting Time</div><div class="value">14 min</div></div>
+          <div class="stat-card"><div class="label">Avg Service Time</div><div class="value">9 min</div></div>
+        </div>
+        <div class="card mt-2">
+          <h3 class="mb-2">Peak Hours (Demo)</h3>
+          <div class="chart-bars">
+            ${hours.map((h, i) => `
+              <div class="chart-bar-wrapper">
+                <div class="chart-bar" style="height:${(data[i] / max) * 100}%;"></div>
+                <div class="chart-label">${h}</div>
+              </div>
+            `).join('')}
+          </div>
+        </div>
+      `;
+    }
+
+    function renderAdminSettings(el) {
+      const s = APP.adminSettings;
+      el.innerHTML = `
+        <div class="card">
+          <h3 class="mb-2">Queue Settings</h3>
+          <div class="flex-between" style="padding:0.75rem 0;border-bottom:1px solid var(--neutral-100);">
+            <span>Auto-advance queue</span>
+            <label class="toggle-switch"><input type="checkbox" id="autoAdvance" ${s.autoAdvance ? 'checked' : ''}><span class="toggle-slider"></span></label>
+          </div>
+          <div class="form-group mt-1">
+            <label>Advance interval (seconds)</label>
+            <input type="number" id="advanceInterval" value="${s.advanceInterval}" min="5" max="60">
+          </div>
+          <div class="form-group">
+            <label>Number of counters</label>
+            <input type="number" id="counters" value="${s.counters}" min="1" max="10">
+          </div>
+        </div>
+        <div class="card mt-2">
+          <h3 class="mb-2">Data Management</h3>
+          <button class="btn btn-danger btn-block" id="resetDemoBtn"><i class="fas fa-trash-alt"></i> Reset Demo Data</button>
+        </div>
+      `;
+
+      document.getElementById('autoAdvance')?.addEventListener('change', e => { s.autoAdvance = e.target.checked; saveState(); startAutoAdvance(); });
+      document.getElementById('advanceInterval')?.addEventListener('change', e => { s.advanceInterval = parseInt(e.target.value) || 12; saveState(); startAutoAdvance(); });
+      document.getElementById('counters')?.addEventListener('change', e => { s.counters = parseInt(e.target.value) || 3; saveState(); });
+      document.getElementById('resetDemoBtn')?.addEventListener('click', () => {
+        openModal(`
+          <div class="modal-header"><h2>Reset Demo Data?</h2><button class="modal-close" onclick="closeModal()">&times;</button></div>
+          <p class="text-muted">This will clear all queues, services, and history, and restore the default demo data.</p>
+          <div class="modal-actions">
+            <button class="btn btn-outline" onclick="closeModal()">Cancel</button>
+            <button class="btn btn-danger" onclick="resetDemoData()">Reset</button>
+          </div>
+        `);
+      });
+    }
+
+    function resetDemoData() {
+      localStorage.clear();
+      initDemoData();
+      loadState();
+      closeModal();
+      showToast('Reset Complete', 'Demo data has been restored.', 'success');
+      renderAdmin();
+    }
+
+    // ---------- Event Listeners ----------
+    function setupEventListeners() {
+      // Nav buttons
+      document.querySelectorAll('[data-nav]').forEach(el => {
+        el.addEventListener('click', (e) => {
+          e.preventDefault();
+          navigateTo(el.dataset.nav);
+        });
+      });
+
+      // Scroll links
+      document.querySelectorAll('[data-scroll]').forEach(el => {
+        el.addEventListener('click', (e) => {
+          e.preventDefault();
+          const target = document.getElementById(el.dataset.scroll);
+          if (target) target.scrollIntoView({ behavior: 'smooth' });
+          document.getElementById('mobileMenu').classList.remove('active');
+        });
+      });
+
+      // Dashboard nav
+      document.querySelectorAll('[data-dash]').forEach(el => {
+        el.addEventListener('click', (e) => {
+          e.preventDefault();
+          APP.dashPanel = el.dataset.dash;
+          if (APP.currentPage !== 'dashboard' && APP.currentPage !== 'queue') navigateTo('dashboard');
+          else renderDashboard();
+        });
+      });
+
+      // Admin nav
+      document.querySelectorAll('[data-admin]').forEach(el => {
+        el.addEventListener('click', (e) => {
+          e.preventDefault();
+          APP.adminPanel = el.dataset.admin;
+          renderAdmin();
+        });
+      });
+
+      // Hamburger
+      document.getElementById('hamburgerBtn').addEventListener('click', () => {
+        const menu = document.getElementById('mobileMenu');
+        menu.classList.toggle('active');
+        const expanded = menu.classList.contains('active');
+        document.getElementById('hamburgerBtn').setAttribute('aria-expanded', expanded);
+      });
+
+      // FAQ accordion
+      document.querySelectorAll('.faq-question').forEach(q => {
+        q.addEventListener('click', () => {
+          const item = q.parentElement;
+          const wasOpen = item.classList.contains('open');
+          document.querySelectorAll('.faq-item').forEach(i => i.classList.remove('open'));
+          if (!wasOpen) item.classList.add('open');
+          q.setAttribute('aria-expanded', !wasOpen);
+        });
+        q.addEventListener('keydown', (e) => {
+          if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); q.click(); }
+        });
+      });
+
+      // Service search
+      document.getElementById('serviceSearch')?.addEventListener('input', (e) => {
+        APP.serviceSearchTerm = e.target.value;
+        renderServices();
+      });
+
+      // Category filters
+      document.getElementById('categoryFilters')?.addEventListener('click', (e) => {
+        const btn = e.target.closest('.cat-btn');
+        if (!btn) return;
+        document.querySelectorAll('#categoryFilters .cat-btn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        APP.selectedCategory = btn.dataset.cat;
+        renderServices();
+      });
+
+      // Notification dot
+      const notifDot = document.getElementById('notifDot');
+      if (notifDot) {
+        const unread = APP.notifications.filter(n => !n.read).length;
+        notifDot.style.display = unread > 0 ? 'block' : 'none';
+      }
+    }
+
+    // ---------- Boot ----------
+    function boot() {
+      initDemoData();
+      loadState();
+      setupEventListeners();
+      startAutoAdvance();
+
+      // Default page: landing
+      navigateTo('landing');
+
+      // Update notification dot
+      const dot = document.getElementById('notifDot');
+      if (dot) {
+        const unread = APP.notifications.filter(n => !n.read).length;
+        dot.style.display = unread > 0 ? 'block' : 'none';
+      }
+    }
+
+    // Start app when DOM ready
+    document.addEventListener('DOMContentLoaded', boot);
+
+    // Expose functions for inline onclick (used in modals)
+    window.closeModal = closeModal;
+    window.joinQueue = joinQueue;
+    window.leaveQueue = leaveQueue;
+    window.saveService = saveService;
+    window.deleteService = deleteService;
+    window.resetDemoData = resetDemoData;
+  </script>
+</body>
+</html>
